@@ -3,6 +3,13 @@ that tracks the player's position, combat, inventory, and minimap."""
 
 from items import Weapon, Potion
 
+# Turn costs for player actions. Every action that takes in-game time
+# should go through GameState.advance_turns() with one of these (or a
+# future weapon/spell-specific cost) so hunger and regen stay in sync
+# with everything else.
+MOVE_TURN_COST = 2      # moving/fleeing/using stairs between rooms
+ATTACK_TURN_COST = 0.5  # a single attack with a base weapon
+
 
 class Room:
     def __init__(self, name, description):
@@ -62,6 +69,26 @@ class GameState:
         self.floor_stack = []  # (room, depth, act, visited) to return to on ascend
         self.floor_visited_cache = {}  # entry_room -> visited set, saved whenever we leave that floor
 
+    def advance_turns(self, amount):
+        """
+        Advance the turn counter by `amount` turns (fractional turns are
+        fine, e.g. an attack costing half a turn). This is the single
+        place turn-based effects tick: hunger drain/penalties/wasting
+        damage, and passive HP/MP regen — and the single place that
+        checks whether the player has died, whatever the cause.
+        """
+        self.turn_count += amount
+
+        for message in self.player.tick_hunger(amount):
+            print(message)
+
+        if self.player.alive:
+            self.player.tick_regen(amount)
+
+        if self.running and not self.player.alive:
+            print("\nYou have died. Game over.")
+            self.running = False
+
     def enter_dungeon(self):
         """Leave the hub and generate floor 1. Only valid from the hub."""
         if self.in_dungeon:
@@ -74,9 +101,10 @@ class GameState:
         self.in_dungeon = True
         self.depth = 1
         self.act = floors.act_for_depth(self.depth)
-        self.turn_count += 1
         print("You step into the darkness and the passage seals behind you...\n")
-        print(self.current_room.describe())
+        self.advance_turns(MOVE_TURN_COST)
+        if self.running:
+            print(self.current_room.describe())
 
     def descend(self):
         """Generate the next floor down from a room with stairs_down set."""
@@ -112,12 +140,13 @@ class GameState:
         self.visited = restored_visited
         self.depth = next_depth
         new_act = floors.act_for_depth(self.depth)
-        self.turn_count += 1
         if new_act != self.act:
             print(f"\nYou feel the nature of the dungeon shift as you descend... (Act {new_act})")
         self.act = new_act
         print(f"You descend to depth {self.depth}.\n")
-        print(self.current_room.describe())
+        self.advance_turns(MOVE_TURN_COST)
+        if self.running:
+            print(self.current_room.describe())
 
     def ascend(self):
         """Return to the previous floor's stairs-down room, exactly as you left it."""
@@ -147,9 +176,10 @@ class GameState:
         self.visited = prev_visited
         self.depth = prev_depth
         self.act = prev_act
-        self.turn_count += 1
         print(f"You climb back up to depth {self.depth}.\n")
-        print(self.current_room.describe())
+        self.advance_turns(MOVE_TURN_COST)
+        if self.running:
+            print(self.current_room.describe())
 
     def move(self, direction):
         living_here = [m for m in self.current_room.monsters if m.alive]
@@ -160,8 +190,9 @@ class GameState:
         if direction in self.current_room.exits:
             self.current_room = self.current_room.exits[direction]
             self.visited.add(self.current_room)
-            self.turn_count += 1
-            print(self.current_room.describe())
+            self.advance_turns(MOVE_TURN_COST)
+            if self.running:
+                print(self.current_room.describe())
         else:
             print("You can't go that way.")
 
@@ -193,7 +224,16 @@ class GameState:
 
         if not target.alive:
             print(f"The {target.name} collapses. You are victorious!")
-            self.turn_count += 1
+            print(f"You gain {target.XP} XP and {target.GOLD} gold.")
+            levels_gained = self.player.gain_xp(target.XP)
+            self.player.gold += target.GOLD
+            for level in levels_gained:
+                print(
+                    f"\n*** Level up! You are now level {level}. ***\n"
+                    f"You gain a stat point (use 'level <stat>' to spend it) "
+                    f"and recover a bit of HP/MP."
+                )
+            self.advance_turns(ATTACK_TURN_COST)
             return
 
         # Monster retaliates.
@@ -203,20 +243,17 @@ class GameState:
             f"The {target.name} claws back for {retaliation} damage. "
             f"({self.player.hp}/{self.player.max_hp} HP)"
         )
-        self.turn_count += 1
-
-        if not self.player.alive:
-            print("\nYou have died. Game over.")
-            self.running = False
+        self.advance_turns(ATTACK_TURN_COST)
 
     def flee(self, direction):
         """Attempt to escape combat by moving, ignoring the monster-blocks-exit rule."""
         if direction in self.current_room.exits:
             self.current_room = self.current_room.exits[direction]
             self.visited.add(self.current_room)
-            self.turn_count += 1
             print(f"You break away and flee {direction}!")
-            print(self.current_room.describe())
+            self.advance_turns(MOVE_TURN_COST)
+            if self.running:
+                print(self.current_room.describe())
         else:
             print("You can't flee that way.")
 

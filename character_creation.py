@@ -9,7 +9,7 @@ from classes import CLASSES, starting_gear_for
 def _prompt_choice(options, label):
     print(f"\nChoose your {label}:")
     for i, opt in enumerate(options, start=1):
-        print(f"  {i}. {opt['name']} - {opt['description']}")
+        print(f"  {i}. {opt['name']} : {opt['description']}")
         bonuses = ", ".join(
             f"{stat} {value:+d}" for stat, value in opt["stat_bonuses"].items() if value != 0
         )

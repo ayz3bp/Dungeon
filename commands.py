@@ -12,6 +12,7 @@ Commands:
   attack [target]     - attack a monster in the room (defaults to the first one)
   flee <direction>    - break off combat and move to an adjacent room
   status              - show your character stats and current location
+  level <stat>        - spend an unspent stat point on CON, STR, DEX, or INT
   take <item>         - pick up an item from the room
   drop <item>         - drop an item from your inventory
   use <item>          - drink a potion or equip a weapon
@@ -67,19 +68,36 @@ def handle_command(verb, rest, state):
         p = state.player
         weapon = p.equipped_weapon.name if p.equipped_weapon else "none"
         location = f"Depth {state.depth} (Act {state.act})" if state.in_dungeon else "Camp"
+        xp_display = (
+            f"{p.XP}/{p.xp_to_next_level}" if p.xp_to_next_level is not None else f"{p.XP} (MAX)"
+        )
         print(f"{p.name} the {p.race} {p.class_name}")
         print(
-            f"HP: {p.hp}/{p.max_hp}  MP: {p.MP}  |  "
+            f"HP: {p.hp}/{p.max_hp}  MP: {p.MP}/{p.max_MP}  |  "
             f"ATK: {p.attack_bonus}  "
             f"AC: {p.AC}  EVA: {p.EVA} " 
             f"PWR: {p.PWR} "
             f"RES: {p.RES} "
+            f"ACC: {p.ACC} "
         )
         print(
             f"CON: {p.CON}  STR: {p.STR}  DEX: {p.DEX}  INT: {p.INT}  |  "
-            f"Level: {p.LVL}  XP: {p.XP}"
+            f"Level: {p.LVL}  XP: {xp_display}"
         )
-        print(f"Weapon: {weapon}  |  Location: {location}")
+        print(f"Weapon: {weapon}  |  Location: {location}  |  Gold: {p.gold}")
+        if p.hunger_tier != "full":
+            print(f"Satiety: {p.satiety:.0f}/100  ({p.hunger_tier})")
+        else:
+            print(f"Satiety: {p.satiety:.0f}/100")
+        if p.unspent_stat_points > 0:
+            print(f"You have {p.unspent_stat_points} unspent stat point(s). (try: level con)")
+
+    elif verb == "level":
+        if not rest:
+            print("Spend a stat point on which stat? (try: level con)")
+        else:
+            success, message = state.player.spend_stat_point(rest)
+            print(message)
 
     elif verb in ("take", "get", "pickup"):
         state.take(rest)

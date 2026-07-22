@@ -8,37 +8,37 @@ bonuses are applied on top (see Player.create in entities.py).
 RACES = [
     {
         "name": "Human",
-        "description": "Adaptable and balanced, unremarkable in any single way.",
+        "description": "An adaptable race. Capable of great good or evil.",
         "stat_bonuses": {"CON": 1, "STR": 1, "DEX": 1, "INT": 1},
     },
     {
         "name": "Elf",
-        "description": "Quick-witted and light on their feet, but physically frail.",
+        "description": "A high and imperious race. Noble and graceful.",
         "stat_bonuses": {"CON": 0, "STR": 0, "DEX": 1, "INT": 1},
     },
     {
         "name": "Dwarf",
-        "description": "Stout and sturdy, built to take a beating.",
+        "description": "A sturdy and resilient race. Strong and enduring.",
         "stat_bonuses": {"CON": 1, "STR": 1, "DEX": 0, "INT": 0},
     },
     {
         "name": "Orc",
-        "description": "Brutish and powerful, with little patience for subtlety.",
+        "description": "A brutish and powerful race. Fierce and determined.",
         "stat_bonuses": {"CON": 0, "STR": 1, "DEX": 1, "INT": 0},
     },
     {
         "name": "Beastman",
-        "description": "Small and nimble, relying on wit and speed to survive.",
+        "description": "A wild and untamed race. They do what they must to survive.",
         "stat_bonuses": {"CON": 1, "STR": 0, "DEX": 1, "INT": 0},
     },
     {
         "name": "Celestial",
-        "description": "Small and nimble, relying on wit and speed to survive.",
+        "description": "A divine race. Their very aura inspires awe.",
         "stat_bonuses": {"CON": 1, "STR": 0, "DEX": 0, "INT": 1},
     },
     {
         "name": "Infernal",
-        "description": "Small and nimble, relying on wit and speed to survive.",
+        "description": "A demonic race. Their strength and cunning are unmatched.",
         "stat_bonuses": {"CON": 0, "STR": 1, "DEX": 0, "INT": 1},
     },
 ]

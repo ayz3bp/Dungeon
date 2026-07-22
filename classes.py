@@ -30,17 +30,17 @@ def _potion(template_name):
 CLASSES = [
     {
         "name": "Warrior",
-        "description": "A hardened front-line fighter — high HP and armor, blunt offense.",
-        "stat_bonuses": {"BHP": 5, "STR": 1, "AC": 1},
-        "starting_weapon": "Iron Sword",
+        "description": "A hardened front-line fighter. High HP and armor, blunt offense.",
+        "stat_bonuses": {"BHP": 5, "CON": 1, "AC": 1},
+        "starting_weapon": "Short Sword",
         "starting_potions": ["Healing Potion"],
     },
 
     {
         "name": "Rogue",
         "description": "Quick and cunning, relying on speed and precision over raw strength.",
-        "stat_bonuses": {"CON": 0, "STR": -1, "DEX": 3, "INT": 1},
-        "starting_weapon": "Rusty Dagger",
+        "stat_bonuses": {"ATK": 1,  "EVA": 1, "DEX": 1},
+        "starting_weapon": "Dagger",
         "starting_potions": ["Healing Potion"],
     },
     {
@@ -53,8 +53,8 @@ CLASSES = [
     {
         "name": "Ranger",
         "description": "A resilient tracker balancing survival instincts with sharp wits.",
-        "stat_bonuses": {"CON": 1, "STR": 0, "DEX": 1, "INT": 0},
-        "starting_weapon": "Spiked Mace",
+        "stat_bonuses": {"ACC": 1, "RES": 1, "STR": 1},
+        "starting_weapon": "Short Bow",
         "starting_potions": ["Healing Potion"],
     },
 ]

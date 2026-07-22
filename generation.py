@@ -32,22 +32,66 @@ ROOM_THEMES = [
 ]
 
 MONSTER_TEMPLATES = [
-    {"name": "Giant Rat",      "hp": (6, 10),  "atk": (1, 3),  "tier": 1, "weight": 5},
-    {"name": "Cave Spider",    "hp": (8, 12),  "atk": (2, 4),  "tier": 1, "weight": 4},
-    {"name": "Skeleton",       "hp": (10, 16), "atk": (2, 5),  "tier": 1, "weight": 3},
-    {"name": "Goblin Grunt",   "hp": (12, 18), "atk": (3, 6),  "tier": 2, "weight": 4},
-    {"name": "Rot Zombie",     "hp": (16, 22), "atk": (3, 7),  "tier": 2, "weight": 3},
-    {"name": "Crypt Wight",    "hp": (18, 24), "atk": (4, 8),  "tier": 2, "weight": 2},
-    {"name": "Dungeon Ogre",   "hp": (25, 35), "atk": (5, 10), "tier": 3, "weight": 2},
-    {"name": "Shadow Wraith",  "hp": (20, 28), "atk": (6, 12), "tier": 3, "weight": 2},
+    {"name": "Giant Rat",      "hp": (6, 10),  "atk": (1, 3),  "tier": 1, "weight": 5, "xp": (2, 4),   "gold": (1, 3)},
+    {"name": "Cave Spider",    "hp": (8, 12),  "atk": (2, 4),  "tier": 1, "weight": 4, "xp": (3, 5),   "gold": (2, 4)},
+    {"name": "Skeleton",       "hp": (10, 16), "atk": (2, 5),  "tier": 1, "weight": 3, "xp": (4, 6),   "gold": (3, 5)},
+    {"name": "Goblin Grunt",   "hp": (12, 18), "atk": (3, 6),  "tier": 2, "weight": 4, "xp": (6, 9),   "gold": (5, 8)},
+    {"name": "Rot Zombie",     "hp": (16, 22), "atk": (3, 7),  "tier": 2, "weight": 3, "xp": (7, 10),  "gold": (6, 9)},
+    {"name": "Crypt Wight",    "hp": (18, 24), "atk": (4, 8),  "tier": 2, "weight": 2, "xp": (8, 12),  "gold": (7, 11)},
+    {"name": "Dungeon Ogre",   "hp": (25, 35), "atk": (5, 10), "tier": 3, "weight": 2, "xp": (14, 20), "gold": (12, 18)},
+    {"name": "Shadow Wraith",  "hp": (20, 28), "atk": (6, 12), "tier": 3, "weight": 2, "xp": (12, 18), "gold": (10, 16)},
 ]
 
 WEAPON_TEMPLATES = [
-    {"name": "Rusty Dagger",    "description": "Small, quick, and none too sharp anymore.",    "damage": (1, 2), "str_req": 5},
-    {"name": "Iron Sword",      "description": "A plain but well-balanced blade.",             "damage": (3, 4), "str_req": 7},
-    {"name": "Spiked Mace",     "description": "Heavy and brutal, built to crush.",            "damage": (4, 6), "str_req": 8},
-    {"name": "War Axe",         "description": "A two-handed axe notched from hard use.",      "damage": (5, 7), "str_req": 8},
-    {"name": "Wand",            "description": "A simple yew wand to channel magic.",          "damage": (2, 3), "str_req": 2},
+    #Tier 1 weapons
+    {"name": "Dirk",            "description": "A simple, short blade.",                                        "damage": (2, 12), "str_req": 7},
+    {"name": "Sword",           "description": "A well-balanced blade.",                                        "damage": (2, 15), "str_req": 7},
+    {"name": "Hand Axe",        "description": "Most commonly used to fell trees.",                             "damage": (2, 14), "str_req": 7},
+    {"name": "Quarterstaff",    "description": "A balanced wooden staff, tipped in iron.",                      "damage": (2, 12), "str_req": 8},
+    {"name": "Spear",           "description": "A long polearm with a sharpened iron tip.",                     "damage": (2, 18), "str_req": 8},
+    {"name": "Hunting Bow",     "description": "A simple ranged weapon for hunting game.",                      "damage": (2, 20), "str_req": 8},
+    
+    #Tier 2 weapons
+    {"name": "Mace",            "description": "A wicked, spiked ball tops this cruel weapon.",                 "damage": (3, 22), "str_req": 10},
+    {"name": "Scimitar",        "description": "A blade that cuts through the air with deadly grace.",          "damage": (3, 22), "str_req": 10},
+    {"name": "Shield",          "description": "A sturdy barrier against incoming attacks.",                    "damage": (3, 20), "str_req": 11},
+    {"name": "Axe",             "description": "A two-handed axe with a sharp edge.",                           "damage": (3, 24), "str_req": 11},
+    {"name": "Halberd",         "description": "A polearm adorned with with a steel blade.",                    "damage": (3, 24), "str_req": 11},
+    {"name": "Battle Hammer",   "description": "A  weapon designed for crushing bones and armor.",              "damage": (3, 26), "str_req": 12},
+    {"name": "Long Bow",        "description": "A ranged weapon designed to pierce and maim.",                  "damage": (3, 28), "str_req": 12},
+    {"name": "Stiletto",        "description": "A thin, needle-like blade.",                                    "damage": (3, 20), "str_req": 10},
+
+    #Tier 3 weapons
+    {"name": "Morningstar",     "description": "A spiked head tops the metal shaft of this instrument.",        "damage": (4, 25), "str_req": 14},
+    {"name": "Long Sword",      "description": "A double-edged blade that cuts enemies with precision.",        "damage": (4, 25), "str_req": 14},
+    {"name": "Crossbow",        "description": "A mechanical system that fires bolts with great force.",        "damage": (4, 34), "str_req": 15},
+    {"name": "Repeating Bow",   "description": "A bow that can unleash a storm of arrows.",                     "damage": (4, 30), "str_req": 15},
+    {"name": "Whip",            "description": "This deadly length of rope lashes with precision.",             "damage": (4, 24), "str_req": 13},
+    {"name": "Hidden Blade",    "description": "A concealed blade tucked under the sleeve.",                    "damage": (4, 24), "str_req": 13},
+    {"name": "Scythe",          "description": "A farming instrument turned deadly weapon.",                    "damage": (4, 32), "str_req": 15},
+
+    #Tier 4 weapons
+    {"name": "Battle Axe",      "description": "The enormous head of this weapon cuts down enemies with ease.", "damage": (5, 32), "str_req": 17},
+    {"name": "Glaive",          "description": "The reach of this hefty weapon is unmatched.",                  "damage": (5, 38), "str_req": 17},
+    {"name": "Greatsword",      "description": "This mighty blade strikes with tremendous force.",              "damage": (5, 30), "str_req": 17},
+    {"name": "War Hammer",      "description": "This crushing lump of steel and lead pulverizes enemies.",      "damage": (5, 34), "str_req": 18},
+    {"name": "Assassin's Blade","description": "This hidden dagger is favored by the shadows.",                 "damage": (5, 28), "str_req": 16},
+    {"name": "Great Shield",    "description": "A towering mass of metal stops any attack.",                    "damage": (5, 28), "str_req": 18},
+    {"name": "Recurve Bow",     "description": "This massive bow with curved limbs fires enormous bolts.",      "damage": (5, 40), "str_req": 18},
+
+    #Tier 5 weapons
+    {"name": "Zewihander",      "description": "More slab of metal than blade, this weapon is unstoppable.",            "damage": (7, 35), "str_req": 21},
+    {"name": "War Maul",        "description": "A massive chunk of metal. Crushes anything in its path.",               "damage": (7, 40), "str_req": 21},
+    {"name": "Greataxe",        "description": "Dual blades adorn this weapon of pure force.",                          "damage": (7, 38), "str_req": 21},
+    {"name": "War Bow",         "description": "This instrument of ruin  fires bolts designed to destroy castles.",     "damage": (7, 45), "str_req": 21},
+
+    #Tier 0 weapons
+    {"name": "Wand",            "description": "A simple yew wand to channel magic.",                                   "damage": (1, 6), "str_req": 5},
+    {"name": "Short Bow",       "description": "A simple bow designed for quick shots.",                                "damage": (1, 12), "str_req": 5},
+    {"name": "Dagger",          "description": "A simple, short blade.",                                                "damage": (1, 8), "str_req": 5},
+    {"name": "Short Sword",     "description": "A well-balanced blade.",                                                "damage": (1, 10), "str_req": 5} 
+
+
 ]
 
 POTION_TEMPLATES = [
@@ -153,7 +197,9 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
             template = _weighted_choice(candidates)
             hp = random.randint(*template["hp"])
             atk_min, atk_max = template["atk"]
-            room.monsters.append(Monster(template["name"], hp, atk_min, atk_max))
+            xp = random.randint(*template["xp"])
+            gold = random.randint(*template["gold"])
+            room.monsters.append(Monster(template["name"], hp, atk_min, atk_max, XP=xp, GOLD=gold))
 
         if random.random() < 0.5:
             if random.random() < 0.5:
