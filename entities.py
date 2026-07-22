@@ -4,7 +4,7 @@ import random
 
 
 class Monster:
-    def __init__(self, name, hp, attack_min, attack_max, EVA=0, PER=0, XP=0, GOLD=0):
+    def __init__(self, name, hp, attack_min, attack_max, EVA=0, PER=0, XP=0, GOLD=0, ACC=0):
         self.name = name
         self.hp = hp
         self.max_hp = hp
@@ -14,13 +14,21 @@ class Monster:
         self.PER = PER
         self.XP = XP
         self.GOLD = GOLD
+        self.ACC = ACC
 
     @property
     def alive(self):
         return self.hp > 0
 
     def attack(self):
-        return random.randint(self.attack_min, self.attack_max)
+        return _triangular_roll(self.attack_min, self.attack_max)
+
+
+def _triangular_roll(low, high):
+    """Roll damage with a mode at the high end of the range."""
+    if low >= high:
+        return low
+    return max(low, min(high, round(random.triangular(low, high, high))))
 
 
 class Player:
@@ -28,9 +36,9 @@ class Player:
     # are layered on top of it in Player.create().
     BASE_STATS = {"CON": 5, "STR": 5, "DEX": 5, "INT": 5}
 
-    BONUS_STATS ={ "BHP": 0, "AC": 0, "EVA": 0, "BMP": 0}
+    BONUS_STATS = {"BHP": 0, "AC": 0, "EVA": 0, "BMP": 0, "ATK": 0}
 
-    def __init__(self, HP=20, attack_min=1, attack_max=5, CON=0, STR=0, DEX=0, INT=0, LVL=1, AC=0, XP=0, EVA=0, MP=0, BHP=0, name="Adventurer"):
+    def __init__(self, HP=20, attack_min=0, attack_max=4, CON=0, STR=0, DEX=0, INT=0, LVL=1, AC=0, XP=0, EVA=0, MP=0, BHP=0, ATK=0, name="Adventurer"):
         self.name = name
         self.race = None        # race name, set by Player.create()
         self.class_name = None  # class name, set by Player.create()
@@ -48,6 +56,7 @@ class Player:
         self.XP = XP    
         self.EVA = EVA
         self.MP = MP
+        self.ATK = ATK
         self.inventory = []       # list of Item
         self.equipped_weapon = None
 
@@ -77,26 +86,43 @@ class Player:
         for stat, bonus in class_.get("stat_bonuses", {}).items():
             flat_stats[stat] = flat_stats.get(stat, 0) + bonus
 
-        hp = 10 + (stats["CON"]*2) + flat_stats["BHP"]
-        attack_min = max(1, 1 + stats["STR"] // 3)
-        attack_max = max(attack_min + 1, 4 + stats["STR"] // 2)
-        ac = max(0, stats["DEX"] // 3) + flat_stats["AC"]
+        hp = 10 + (stats["CON"]*5) + flat_stats["BHP"]
+        attack_min, attack_max = 0, 4
+        ac = max(0, stats["DEX"] // 5) + flat_stats["AC"]
         eva = max(0, stats["DEX"] // 2) + flat_stats["EVA"]
-        mp = max(0, stats["INT"] * 2) +flat_stats["BMP"]
+        mp = max(0, stats["INT"]) +flat_stats["BMP"]
 
         player = cls(
             HP=hp, attack_min=attack_min, attack_max=attack_max,
             CON=stats["CON"], STR=stats["STR"], DEX=stats["DEX"], INT=stats["INT"],
-            LVL=1, AC=ac, XP=0, EVA=eva, MP=mp, name=name,
+            LVL=1, AC=ac, XP=0, EVA=eva, MP=mp, BHP=flat_stats["BHP"],
+            ATK=flat_stats["ATK"], name=name,
         )
         player.race = race["name"]
         player.class_name = class_["name"]
         return player
 
     def attack(self):
-        base = random.randint(self.attack_min, self.attack_max)
-        bonus = self.equipped_weapon.attack_bonus if self.equipped_weapon else 0
-        return base + bonus
+        low, high = self.damage_range
+        return _triangular_roll(low, high)
+
+    @property
+    def attack_bonus(self):
+        """Total ATK applied to both ends of the equipped damage range."""
+        if self.equipped_weapon is None:
+            return self.ATK
+        excess_strength = max(0, self.STR - self.equipped_weapon.str_req)
+        return self.ATK + self.equipped_weapon.attack_bonus + excess_strength // 2
+
+    @property
+    def damage_range(self):
+        if self.equipped_weapon is None:
+            base_min, base_max = 0, 4
+        else:
+            base_min = self.equipped_weapon.damage_min
+            base_max = self.equipped_weapon.damage_max
+        bonus = self.attack_bonus
+        return base_min + bonus, base_max + bonus
 
     def heal(self, amount):
         self.hp = min(self.max_hp, self.hp + amount)

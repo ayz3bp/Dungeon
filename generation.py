@@ -43,10 +43,10 @@ MONSTER_TEMPLATES = [
 ]
 
 WEAPON_TEMPLATES = [
-    {"name": "Rusty Dagger", "description": "Small, quick, and none too sharp anymore.", "bonus": (1, 2)},
-    {"name": "Iron Sword",   "description": "A plain but well-balanced blade.", "bonus": (3, 4)},
-    {"name": "Spiked Mace",  "description": "Heavy and brutal, built to crush.", "bonus": (4, 6)},
-    {"name": "War Axe",      "description": "A two-handed axe notched from hard use.", "bonus": (5, 7)},
+    {"name": "Rusty Dagger", "description": "Small, quick, and none too sharp anymore.", "damage": (1, 2), "str_req": 3},
+    {"name": "Iron Sword",   "description": "A plain but well-balanced blade.", "damage": (3, 4), "str_req": 5},
+    {"name": "Spiked Mace",  "description": "Heavy and brutal, built to crush.", "damage": (4, 6), "str_req": 6},
+    {"name": "War Axe",      "description": "A two-handed axe notched from hard use.", "damage": (5, 7), "str_req": 8},
 ]
 
 POTION_TEMPLATES = [
@@ -157,8 +157,11 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
         if random.random() < 0.5:
             if random.random() < 0.5:
                 wt = random.choice(WEAPON_TEMPLATES)
-                bonus = random.randint(*wt["bonus"])
-                room.items.append(Weapon(wt["name"], wt["description"], bonus))
+                damage_min, damage_max = wt["damage"]
+                room.items.append(Weapon(
+                    wt["name"], wt["description"], damage_min, damage_max,
+                    wt.get("str_req", 0), wt.get("attack_bonus", 0),
+                ))
             else:
                 pt = random.choice(POTION_TEMPLATES)
                 heal = random.randint(*pt["heal"])

@@ -356,7 +356,17 @@ class GameState:
                 f"({self.player.hp}/{self.player.max_hp} HP)"
             )
         elif isinstance(item, Weapon):
+            if self.player.STR < item.str_req:
+                print(
+                    f"You need STR {item.str_req} to wield the {item.name} "
+                    f"(you have {self.player.STR})."
+                )
+                return
             self.player.equipped_weapon = item
-            print(f"You equip the {item.name} (+{item.attack_bonus} attack).")
+            low, high = self.player.damage_range
+            print(
+                f"You equip the {item.name} ({item.damage_min}-{item.damage_max} base damage, "
+                f"damage becomes {low}-{high})."
+            )
         else:
             print(f"You can't figure out how to use the {item.name}.")

@@ -11,7 +11,7 @@ Commands:
   go <direction>      - move (north, south, east, west)
   attack [target]     - attack a monster in the room (defaults to the first one)
   flee <direction>    - break off combat and move to an adjacent room
-  status              - show your HP, equipped weapon, and depth
+  status              - show your character stats and current location
   take <item>         - pick up an item from the room
   drop <item>         - drop an item from your inventory
   use <item>          - drink a potion or equip a weapon
@@ -67,7 +67,17 @@ def handle_command(verb, rest, state):
         p = state.player
         weapon = p.equipped_weapon.name if p.equipped_weapon else "none"
         location = f"Depth {state.depth} (Act {state.act})" if state.in_dungeon else "Camp"
-        print(f"HP: {p.hp}/{p.max_hp}  |  Weapon: {weapon}  |  {location}")
+        print(f"{p.name} the {p.race} {p.class_name}")
+        print(
+            f"HP: {p.hp}/{p.max_hp}  MP: {p.MP}  |  "
+            f"Damage: {p.damage_range[0]}-{p.damage_range[1]}  ATK: {p.attack_bonus}  "
+            f"AC: {p.AC}  EVA: {p.EVA}"
+        )
+        print(
+            f"CON: {p.CON}  STR: {p.STR}  DEX: {p.DEX}  INT: {p.INT}  |  "
+            f"Level: {p.LVL}  XP: {p.XP}"
+        )
+        print(f"Weapon: {weapon}  |  {location}")
 
     elif verb in ("take", "get", "pickup"):
         state.take(rest)
@@ -84,7 +94,14 @@ def handle_command(verb, rest, state):
         else:
             for item in state.player.inventory:
                 tag = " (equipped)" if item is state.player.equipped_weapon else ""
-                print(f"  {item.name}{tag} - {item.description}")
+                if hasattr(item, "damage_min"):
+                    details = (
+                        f" [{item.damage_min}-{item.damage_max} damage, "
+                        f"STR Req {item.str_req}, ATK +{item.attack_bonus}]"
+                    )
+                else:
+                    details = ""
+                print(f"  {item.name}{tag}{details} - {item.description}")
 
     elif verb == "help":
         print(HELP_TEXT)

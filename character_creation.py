@@ -16,10 +16,17 @@ def _prompt_choice(options, label):
         if bonuses:
             print(f"     ({bonuses})")
     while True:
-        raw = input(f"Enter a number (1-{len(options)}): ").strip()
+        raw = input(f"Enter a {label} name: ").strip()
+        selected_name = raw.casefold()
+        for option in options:
+            if option["name"].casefold() == selected_name:
+                return option
+
+        # Keep numbered choices working for existing players and scripts.
         if raw.isdigit() and 1 <= int(raw) <= len(options):
             return options[int(raw) - 1]
-        print("That's not a valid choice.")
+        valid_names = ", ".join(option["name"] for option in options)
+        print(f"That's not a valid choice. Enter one of: {valid_names}.")
 
 
 def create_character():
@@ -38,14 +45,20 @@ def create_character():
 
     for item in starting_gear_for(class_):
         player.inventory.append(item)
-        if hasattr(item, "attack_bonus") and player.equipped_weapon is None:
+        if (
+            hasattr(item, "damage_min")
+            and player.equipped_weapon is None
+            and player.STR >= item.str_req
+        ):
             player.equipped_weapon = item
 
     print(f"\n{name} the {race['name']} {class_['name']} is ready.")
     print(
         f"HP: {player.hp}  STR: {player.STR}  CON: {player.CON}  "
         f"DEX: {player.DEX}  INT: {player.INT}  AC: {player.AC}  "
-        f"EVA: {player.EVA}  MP: {player.MP}"
+        f"EVA: {player.EVA}  MP: {player.MP}  "
+        f"Damage: {player.damage_range[0]}-{player.damage_range[1]}  "
+        f"ATK: {player.attack_bonus}"
     )
     if player.inventory:
         print("Starting items: " + ", ".join(item.name for item in player.inventory))

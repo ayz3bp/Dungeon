@@ -13,9 +13,11 @@ from items import Weapon, Potion
 
 def _weapon(template_name):
     template = next(t for t in WEAPON_TEMPLATES if t["name"] == template_name)
-    low, high = template["bonus"]
-    bonus = (low + high) // 2
-    return Weapon(template["name"], template["description"], bonus)
+    damage_min, damage_max = template["damage"]
+    return Weapon(
+        template["name"], template["description"], damage_min, damage_max,
+        template.get("str_req", 0), template.get("attack_bonus", 0),
+    )
 
 
 def _potion(template_name):
