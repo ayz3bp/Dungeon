@@ -46,8 +46,8 @@ CLASSES = [
     {
         "name": "Mage",
         "description": "Frail in body but powerful in mind, wielding intellect over muscle.",
-        "stat_bonuses": {"CON": -1, "STR": -2, "DEX": 0, "INT": 4},
-        "starting_weapon": "Rusty Dagger",
+        "stat_bonuses": {"INT": 1, "RES": 1, "BMP":5},
+        "starting_weapon": "Wand",
         "starting_potions": ["Healing Potion"],
     },
     {

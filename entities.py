@@ -36,9 +36,9 @@ class Player:
     # are layered on top of it in Player.create().
     BASE_STATS = {"CON": 5, "STR": 5, "DEX": 5, "INT": 5}
 
-    BONUS_STATS = {"BHP": 0, "AC": 0, "EVA": 0, "BMP": 0, "ATK": 0}
+    BONUS_STATS = {"BHP": 0, "AC": 0, "EVA": 0, "BMP": 0, "ATK": 0, "RES": 0, "PWR": 0}
 
-    def __init__(self, HP=20, attack_min=0, attack_max=4, CON=0, STR=0, DEX=0, INT=0, LVL=1, AC=0, XP=0, EVA=0, MP=0, BHP=0, ATK=0, name="Adventurer"):
+    def __init__(self, HP=20, attack_min=0, attack_max=4, CON=0, STR=0, DEX=0, INT=0, LVL=1, AC=0, XP=0, EVA=0, MP=0, BMP=0, BHP=0, ATK=0, RES=0, PWR = 0, name="Adventurer"):
         self.name = name
         self.race = None        # race name, set by Player.create()
         self.class_name = None  # class name, set by Player.create()
@@ -56,7 +56,10 @@ class Player:
         self.XP = XP    
         self.EVA = EVA
         self.MP = MP
+        self.BMP = BMP
         self.ATK = ATK
+        self.RES = RES
+        self.PWR = PWR
         self.inventory = []       # list of Item
         self.equipped_weapon = None
 
@@ -88,15 +91,17 @@ class Player:
 
         hp = 10 + (stats["CON"]*5) + flat_stats["BHP"]
         attack_min, attack_max = 0, 4
-        ac = max(0, stats["DEX"] // 5) + flat_stats["AC"]
+        ac = max(0, stats["CON"] // 5) + flat_stats["AC"]
+        res = max(0, stats["CON"] // 10) + flat_stats["RES"]
+        pwr = max(0, stats["INT"]) + flat_stats["PWR"]
         eva = max(0, stats["DEX"] // 2) + flat_stats["EVA"]
-        mp = max(0, stats["INT"]) +flat_stats["BMP"]
+        mp = max(0, stats["INT"]*2) + flat_stats["BMP"]
 
         player = cls(
             HP=hp, attack_min=attack_min, attack_max=attack_max,
             CON=stats["CON"], STR=stats["STR"], DEX=stats["DEX"], INT=stats["INT"],
             LVL=1, AC=ac, XP=0, EVA=eva, MP=mp, BHP=flat_stats["BHP"],
-            ATK=flat_stats["ATK"], name=name,
+            ATK=flat_stats["ATK"], RES=res, PWR=pwr, name=name,
         )
         player.race = race["name"]
         player.class_name = class_["name"]

@@ -43,10 +43,11 @@ MONSTER_TEMPLATES = [
 ]
 
 WEAPON_TEMPLATES = [
-    {"name": "Rusty Dagger", "description": "Small, quick, and none too sharp anymore.", "damage": (1, 2), "str_req": 3},
-    {"name": "Iron Sword",   "description": "A plain but well-balanced blade.", "damage": (3, 4), "str_req": 5},
-    {"name": "Spiked Mace",  "description": "Heavy and brutal, built to crush.", "damage": (4, 6), "str_req": 6},
-    {"name": "War Axe",      "description": "A two-handed axe notched from hard use.", "damage": (5, 7), "str_req": 8},
+    {"name": "Rusty Dagger",    "description": "Small, quick, and none too sharp anymore.",    "damage": (1, 2), "str_req": 5},
+    {"name": "Iron Sword",      "description": "A plain but well-balanced blade.",             "damage": (3, 4), "str_req": 7},
+    {"name": "Spiked Mace",     "description": "Heavy and brutal, built to crush.",            "damage": (4, 6), "str_req": 8},
+    {"name": "War Axe",         "description": "A two-handed axe notched from hard use.",      "damage": (5, 7), "str_req": 8},
+    {"name": "Wand",            "description": "A simple yew wand to channel magic.",          "damage": (2, 3), "str_req": 2},
 ]
 
 POTION_TEMPLATES = [

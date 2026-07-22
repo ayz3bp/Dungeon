@@ -53,13 +53,7 @@ def create_character():
             player.equipped_weapon = item
 
     print(f"\n{name} the {race['name']} {class_['name']} is ready.")
-    print(
-        f"HP: {player.hp}  STR: {player.STR}  CON: {player.CON}  "
-        f"DEX: {player.DEX}  INT: {player.INT}  AC: {player.AC}  "
-        f"EVA: {player.EVA}  MP: {player.MP}  "
-        f"Damage: {player.damage_range[0]}-{player.damage_range[1]}  "
-        f"ATK: {player.attack_bonus}"
-    )
+
     if player.inventory:
         print("Starting items: " + ", ".join(item.name for item in player.inventory))
 

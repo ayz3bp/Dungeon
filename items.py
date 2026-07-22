@@ -9,12 +9,14 @@ class Item:
 
 
 class Weapon(Item):
-    def __init__(self, name, description, damage_min, damage_max, str_req=0, attack_bonus=0):
+    def __init__(self, name, description, damage_min, damage_max, str_req=0, attack_bonus=0, int_req=0, dex_req=0):
         super().__init__(name, description)
         self.damage_min = damage_min
         self.damage_max = damage_max
         self.str_req = str_req
         self.attack_bonus = attack_bonus
+        self.int_req = int_req
+        self.dex_req = dex_req
 
 
 class Potion(Item):

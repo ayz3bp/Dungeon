@@ -70,14 +70,16 @@ def handle_command(verb, rest, state):
         print(f"{p.name} the {p.race} {p.class_name}")
         print(
             f"HP: {p.hp}/{p.max_hp}  MP: {p.MP}  |  "
-            f"Damage: {p.damage_range[0]}-{p.damage_range[1]}  ATK: {p.attack_bonus}  "
-            f"AC: {p.AC}  EVA: {p.EVA}"
+            f"ATK: {p.attack_bonus}  "
+            f"AC: {p.AC}  EVA: {p.EVA} " 
+            f"PWR: {p.PWR} "
+            f"RES: {p.RES} "
         )
         print(
             f"CON: {p.CON}  STR: {p.STR}  DEX: {p.DEX}  INT: {p.INT}  |  "
             f"Level: {p.LVL}  XP: {p.XP}"
         )
-        print(f"Weapon: {weapon}  |  {location}")
+        print(f"Weapon: {weapon}  |  Location: {location}")
 
     elif verb in ("take", "get", "pickup"):
         state.take(rest)
