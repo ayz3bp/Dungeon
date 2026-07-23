@@ -55,12 +55,23 @@ def _hunger_tier_for(satiety):
     return "full"
 
 
+# Message printed whenever satiety crosses into a given tier, whichever
+# direction it came from (draining via tick_hunger, or recovering via
+# Player.eat()).
+TIER_MESSAGES = {
+    "full": "You feel fully sated.",
+    "hungry": "You are hungry. (-1 STR, -1 DEX)",
+    "starving": "You are starving. (-1 to all stats)",
+    "wasting": "You are wasting away...",
+}
+
+
 class Player:
     # Every character starts from this baseline before race/class bonuses
     # are layered on top of it in Player.create().
     BASE_STATS = {"CON": 5, "STR": 5, "DEX": 5, "INT": 5, "LVL": 1}
 
-    BONUS_STATS = {"BHP": 0, "AC": 0, "EVA": 0, "BMP": 0, "ATK": 0, "RES": 0, "PWR": 0, "ACC": 0}
+    BONUS_STATS = {"BHP": 0, "AC": 0, "EVA": 0, "BMP": 0, "ATK": 0, "RES": 0, "PWR": 0, "ACC": 0, "REG": 1, "MPG": 5}
 
     # XP_TO_LEVEL[i] is the XP needed to advance from level (i + 1) to (i + 2).
     # e.g. XP_TO_LEVEL[0] == 10 is the cost of going from level 1 to level 2.
@@ -68,7 +79,7 @@ class Player:
                    110, 120, 130, 140, 150, 160, 170, 180, 190, 200]
     MAX_LEVEL = len(XP_TO_LEVEL) + 1  # 21
 
-    def __init__(self, HP=20, attack_min=0, attack_max=4, CON=0, STR=0, DEX=0, INT=0, LVL=1, AC=0, XP=0, EVA=0, MP=0, BMP=0, BHP=0, ATK=0, RES=0, PWR = 0, ACC=0, name="Adventurer"):
+    def __init__(self, HP=20, attack_min=0, attack_max=4, CON=0, STR=0, DEX=0, INT=0, LVL=1, AC=0, XP=0, EVA=0, MP=0, BMP=0, BHP=0, ATK=0, RES=0, PWR = 0, ACC=0, REG=0, MPG=0, name="Adventurer"):
         self.name = name
         self.race = None        # race name, set by Player.create()
         self.class_name = None  # class name, set by Player.create()
@@ -92,6 +103,8 @@ class Player:
         self.RES = RES
         self.PWR = PWR
         self.ACC = ACC
+        self.REG = REG
+        self.MPG = MPG
         self.gold = 0
         self.unspent_stat_points = 0
         self.flat_bonuses = dict(self.BONUS_STATS)
@@ -102,6 +115,7 @@ class Player:
         self._regen_accum = 0.0
         self.inventory = []       # list of Item
         self.equipped_weapon = None
+        self.equipped_armor = None
 
     @property
     def alive(self):
@@ -140,8 +154,9 @@ class Player:
             attack_min=0, attack_max=4,
             CON=stats["CON"], STR=stats["STR"], DEX=stats["DEX"], INT=stats["INT"],
             LVL=1, XP=0, BHP=flat_stats["BHP"], ATK=flat_stats["ATK"],
-            BMP=flat_stats["BMP"], name=name,
+            BMP=flat_stats["BMP"], REG=flat_stats["REG"], MPG=flat_stats["MPG"], name=name,
         )
+
         player.flat_bonuses = flat_stats
         player.recompute_derived_stats()
         player.hp = player.max_hp
@@ -171,6 +186,8 @@ class Player:
         self.EVA = 2 + max(0, self.DEX // 2) + max(0, self.LVL // 2) + b["EVA"]
         self.ACC = 6 + max(0, self.LVL) + b["ACC"]
         self.max_MP = max(0, self.INT * 2) + b["BMP"] + self.LVL
+        self.REG = max(1, self.CON // 5) + b["REG"]
+        self.MPG = max(5, self.INT // 5) + b["MPG"]
 
     def gain_xp(self, amount):
         """
@@ -184,7 +201,7 @@ class Player:
         while self.xp_to_next_level is not None and self.XP >= self.xp_to_next_level:
             self.XP -= self.xp_to_next_level
             self.LVL += 1
-            self.unspent_stat_points += 1
+            self.unspent_stat_points += 2
 
             missing_hp = self.max_hp - self.hp
             missing_mp = self.max_MP - self.MP
@@ -219,40 +236,51 @@ class Player:
             f"({self.unspent_stat_points} stat point(s) remaining.)"
         )
 
+    def _sync_hunger_tier(self):
+        """
+        Recompute the hunger tier from current satiety and apply/remove
+        the associated stat penalty if it changed (works in either
+        direction — tick_hunger only ever worsens it, Player.eat() only
+        ever improves it). Returns the tier-change message, or None if
+        the tier didn't change.
+        """
+        new_tier = _hunger_tier_for(self.satiety)
+        if new_tier == self.hunger_tier:
+            return None
+
+        target_penalty = HUNGER_PENALTIES[new_tier]
+        for stat, target in target_penalty.items():
+            delta = self._hunger_penalty[stat] - target
+            if delta:
+                setattr(self, stat, getattr(self, stat) + delta)
+        self._hunger_penalty = dict(target_penalty)
+        self.hunger_tier = new_tier
+        self.recompute_derived_stats()
+        self.hp = min(self.hp, self.max_hp)
+        self.MP = min(self.MP, self.max_MP)
+        return TIER_MESSAGES[new_tier]
+
     def tick_hunger(self, turns):
         """
         Advance satiety by `turns` (1 satiety lost per turn elapsed) and
         apply/remove stat penalties when crossing a hunger tier boundary.
-        While in the 'wasting' tier, also deals 1 HP of damage per turn
-        elapsed (accumulated fractionally so half-turn actions still add
-        up correctly). Returns a list of messages to print for whatever
+        While in the 'wasting' tier, also deals HP damage per turn
+        elapsed that escalates the deeper past -50 satiety goes
+        (accumulated fractionally so half-turn actions still add up
+        correctly). Returns a list of messages to print for whatever
         happened this tick (empty if nothing notable did).
         """
         self.satiety -= turns
         messages = []
 
-        new_tier = _hunger_tier_for(self.satiety)
-        if new_tier != self.hunger_tier:
-            target_penalty = HUNGER_PENALTIES[new_tier]
-            for stat, target in target_penalty.items():
-                delta = self._hunger_penalty[stat] - target
-                if delta:
-                    setattr(self, stat, getattr(self, stat) + delta)
-            self._hunger_penalty = dict(target_penalty)
-            self.hunger_tier = new_tier
-            self.recompute_derived_stats()
-            self.hp = min(self.hp, self.max_hp)
-            self.MP = min(self.MP, self.max_MP)
-
-            if new_tier == "hungry":
-                messages.append("You are hungry. (-1 STR, -1 DEX)")
-            elif new_tier == "starving":
-                messages.append("You are starving. (-1 to all stats)")
-            elif new_tier == "wasting":
-                messages.append("You are wasting away...")
+        tier_message = self._sync_hunger_tier()
+        if tier_message:
+            messages.append(tier_message)
 
         if self.hunger_tier == "wasting":
-            self._wasting_accum += turns
+            depth_below = max(0.0, -50 - self.satiety)
+            damage_rate = 1 + int(depth_below // 50)  # +1 per additional -50 satiety
+            self._wasting_accum += turns * damage_rate
             dmg = int(self._wasting_accum)
             if dmg:
                 self._wasting_accum -= dmg
@@ -264,16 +292,46 @@ class Player:
 
         return messages
 
+    def eat(self, food_name, restore_amount):
+        """
+        Consume a food item and apply satiety-restore rules:
+          - satiety below -50: snap up to -50 first, then add the full
+            restore amount on top (a starving character doesn't lose out
+            on how deep the hole was)
+          - satiety above 100: already full, only a token +25 satiety
+          - otherwise: add the full restore amount
+        Returns a list of messages to print (the food's own message,
+        plus a hunger tier-change message if satiety crossed a
+        boundary).
+        """
+        if self.satiety < -50:
+            self.satiety = -50 + restore_amount
+            food_message = f"The {food_name} was delicious!"
+        elif self.satiety > 100:
+            self.satiety += 25
+            food_message = "You're too full to enjoy it..."
+        else:
+            self.satiety += restore_amount
+            food_message = f"The {food_name} was delicious!"
+
+        messages = [food_message]
+        tier_message = self._sync_hunger_tier()
+        if tier_message:
+            messages.append(tier_message)
+        return messages
+
     def tick_regen(self, turns):
         """
         Passive regeneration: 1% of max HP/MP (rounded up) every 2 turns
         elapsed, accumulated fractionally like tick_hunger.
         """
+        if self.hunger_tier in ("starving", "wasting"):
+            return
         self._regen_accum += turns
         while self._regen_accum >= 2:
             self._regen_accum -= 2
-            self.hp = min(self.max_hp, self.hp + math.ceil(0.01 * self.max_hp))
-            self.MP = min(self.max_MP, self.MP + math.ceil(0.01 * self.max_MP))
+            self.hp = min(self.max_hp, self.hp + math.ceil(0.01 *(self.REG) * self.max_hp))
+            self.MP = min(self.max_MP, self.MP + math.ceil(0.01 *(self.MPG) * self.max_MP))
 
     def attack(self):
         low, high = self.damage_range
@@ -295,6 +353,27 @@ class Player:
             base_min = self.equipped_weapon.damage_min
             base_max = self.equipped_weapon.damage_max
         bonus = self.attack_bonus
+        return base_min + bonus, base_max + bonus
+
+    def block(self):
+        low, high = self.block_range
+        return _triangular_roll(low, high)
+
+    @property
+    def block_bonus(self):
+        """Total AC applied to both ends of the equipped block range."""
+        if self.equipped_armor is None:
+            return self.AC
+        return self.AC + self.equipped_armor.armor_class
+
+    @property
+    def block_range(self):
+        if self.equipped_armor is None:
+            base_min, base_max = 0, 0
+        else:
+            base_min = self.equipped_armor.block_min
+            base_max = self.equipped_armor.block_max
+        bonus = self.block_bonus
         return base_min + bonus, base_max + bonus
 
     def heal(self, amount):

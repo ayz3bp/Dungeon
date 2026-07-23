@@ -1,7 +1,9 @@
 """The dungeon's world model: Room layout/state and the live GameState
 that tracks the player's position, combat, inventory, and minimap."""
 
-from items import Weapon, Potion
+import math
+
+from items import Weapon, Potion, Armor, Food
 
 # Turn costs for player actions. Every action that takes in-game time
 # should go through GameState.advance_turns() with one of these (or a
@@ -9,6 +11,28 @@ from items import Weapon, Potion
 # with everything else.
 MOVE_TURN_COST = 2      # moving/fleeing/using stairs between rooms
 ATTACK_TURN_COST = 0.5  # a single attack with a base weapon
+
+
+def _apply_potion_effect(potion, entity):
+    """
+    Apply a potion's effect to `entity` — self.player when drunk, or a
+    Monster when thrown — and return a short description of what
+    happened, for the caller to fold into its own message.
+
+    To add a new potion kind, add a branch here. If a kind only makes
+    sense for one side (e.g. a future stat buff Monster doesn't carry),
+    guard it with hasattr(entity, ...) the way world.py already does
+    elsewhere, rather than assuming the target is always the player.
+    """
+    if potion.kind == "heal":
+        before = entity.hp
+        entity.hp = min(entity.max_hp, entity.hp + potion.power)
+        return f"restores {entity.hp - before} HP ({entity.hp}/{entity.max_hp} HP)"
+    elif potion.kind == "damage":
+        entity.hp = max(0, entity.hp - potion.power)
+        return f"deals {potion.power} damage ({entity.hp}/{entity.max_hp} HP)"
+    else:
+        return "has no effect"
 
 
 class Room:
@@ -76,7 +100,18 @@ class GameState:
         place turn-based effects tick: hunger drain/penalties/wasting
         damage, and passive HP/MP regen — and the single place that
         checks whether the player has died, whatever the cause.
+
+        It's also the single place the world reacts to the player. The
+        player only spends turns by acting, so this is where "an enemy
+        acts after each turn" gets enforced: every time this call pushes
+        turn_count across a whole-number boundary, every living monster
+        in the current room gets one attack. A cheap action (0.5-turn
+        attack) only crosses a boundary every other swing — two attacks
+        add up to one turn's worth of monster response — while a costly
+        action (a 2-turn move) crosses two boundaries at once, so an
+        enemy left standing gets two attacks for it.
         """
+        old_turn_count = self.turn_count
         self.turn_count += amount
 
         for message in self.player.tick_hunger(amount):
@@ -85,9 +120,39 @@ class GameState:
         if self.player.alive:
             self.player.tick_regen(amount)
 
+        turns_elapsed = math.floor(self.turn_count) - math.floor(old_turn_count)
+        if turns_elapsed > 0 and self.running and self.player.alive:
+            self._monster_turn(turns_elapsed)
+
         if self.running and not self.player.alive:
             print("\nYou have died. Game over.")
             self.running = False
+
+    def _monster_turn(self, count):
+        """
+        Let every living monster in the current room attack once, `count`
+        times over (once per whole turn the triggering action crossed).
+        Right now fights are always single-enemy, but this already loops
+        over every living monster in the room so a multi-monster room
+        (or a monster gaining an extra attack) works without changes here.
+        """
+        for _ in range(count):
+            if not self.player.alive:
+                break
+            for monster in self.current_room.monsters:
+                if not monster.alive:
+                    continue
+                if not self.player.alive:
+                    break
+                retaliation = monster.attack()
+                block = self.player.block()
+                damage_taken = max(0, retaliation - block)
+                self.player.hp = max(0, self.player.hp - damage_taken)
+                print(
+                    f"The {monster.name} claws back for {retaliation} damage. "
+                    f"You block {block} of it, taking {damage_taken}. "
+                    f"({self.player.hp}/{self.player.max_hp} HP)"
+                )
 
     def enter_dungeon(self):
         """Leave the hub and generate floor 1. Only valid from the hub."""
@@ -233,16 +298,10 @@ class GameState:
                     f"You gain a stat point (use 'level <stat>' to spend it) "
                     f"and recover a bit of HP/MP."
                 )
-            self.advance_turns(ATTACK_TURN_COST)
-            return
 
-        # Monster retaliates.
-        retaliation = target.attack()
-        self.player.hp = max(0, self.player.hp - retaliation)
-        print(
-            f"The {target.name} claws back for {retaliation} damage. "
-            f"({self.player.hp}/{self.player.max_hp} HP)"
-        )
+        # Monster retaliation (if the target or any other monster here
+        # survived) now happens inside advance_turns, once a full turn's
+        # worth of action has actually elapsed — see _monster_turn.
         self.advance_turns(ATTACK_TURN_COST)
 
     def flee(self, direction):
@@ -373,6 +432,9 @@ class GameState:
         if self.player.equipped_weapon is item:
             self.player.equipped_weapon = None
             print(f"You unequip and drop the {item.name}.")
+        elif self.player.equipped_armor is item:
+            self.player.equipped_armor = None
+            print(f"You unequip and drop the {item.name}.")
         else:
             print(f"You drop the {item.name}.")
 
@@ -386,12 +448,7 @@ class GameState:
             return
 
         if isinstance(item, Potion):
-            self.player.heal(item.heal_amount)
-            self.player.inventory.remove(item)
-            print(
-                f"You drink the {item.name} and recover {item.heal_amount} HP. "
-                f"({self.player.hp}/{self.player.max_hp} HP)"
-            )
+            self.drink(name_fragment)
         elif isinstance(item, Weapon):
             if self.player.STR < item.str_req:
                 print(
@@ -405,5 +462,83 @@ class GameState:
                 f"You equip the {item.name} ({item.damage_min}-{item.damage_max} base damage, "
                 f"damage becomes {low}-{high})."
             )
+        elif isinstance(item, Armor):
+            if self.player.STR < item.str_req:
+                print(
+                    f"You need STR {item.str_req} to wear the {item.name} "
+                    f"(you have {self.player.STR})."
+                )
+                return
+            self.player.equipped_armor = item
+            low, high = self.player.block_range
+            print(
+                f"You equip the {item.name} ({item.block_min}-{item.block_max} base block, "
+                f"block becomes {low}-{high})."
+            )
+        elif isinstance(item, Food):
+            for message in self.player.eat(item.name, item.satiety_restore):
+                print(message)
+            self.player.inventory.remove(item)
         else:
             print(f"You can't figure out how to use the {item.name}.")
+
+    def drink(self, name_fragment):
+        """Drink a potion yourself — the effect applies to the player."""
+        if not name_fragment:
+            print("Drink what?")
+            return
+        item = self.find_item_in_inventory(name_fragment)
+        if item is None:
+            print(f"You aren't carrying a '{name_fragment}'.")
+            return
+        if not isinstance(item, Potion):
+            print(f"You can't drink the {item.name}.")
+            return
+
+        effect = _apply_potion_effect(item, self.player)
+        print(f"You drink the {item.name}. It {effect}.")
+        self.player.inventory.remove(item)
+        self.advance_turns(ATTACK_TURN_COST)
+
+    def throw(self, name_fragment, target_name):
+        """Throw a potion at a monster in the room — the effect applies to it."""
+        if not name_fragment:
+            print("Throw what?")
+            return
+        item = self.find_item_in_inventory(name_fragment)
+        if item is None:
+            print(f"You aren't carrying a '{name_fragment}'.")
+            return
+        if not isinstance(item, Potion):
+            print(f"The {item.name} doesn't do much when thrown.")
+            return
+
+        if not target_name:
+            living = [m for m in self.current_room.monsters if m.alive]
+            if not living:
+                print("There's nothing here to throw it at.")
+                return
+            target = living[0]
+        else:
+            target = self.find_monster(target_name)
+            if target is None:
+                print(f"There's no '{target_name}' here to throw it at.")
+                return
+
+        effect = _apply_potion_effect(item, target)
+        print(f"You throw the {item.name} at the {target.name}. It {effect}.")
+        self.player.inventory.remove(item)
+
+        if not target.alive:
+            print(f"The {target.name} collapses!")
+            print(f"You gain {target.XP} XP and {target.GOLD} gold.")
+            levels_gained = self.player.gain_xp(target.XP)
+            self.player.gold += target.GOLD
+            for level in levels_gained:
+                print(
+                    f"\n*** Level up! You are now level {level}. ***\n"
+                    f"You gain a stat point (use 'level <stat>' to spend it) "
+                    f"and recover a bit of HP/MP."
+                )
+
+        self.advance_turns(ATTACK_TURN_COST)

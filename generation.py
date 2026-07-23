@@ -5,7 +5,7 @@ import random
 from collections import deque
 
 from entities import Monster
-from items import Item, Weapon, Potion
+from items import Item, Weapon, Potion, Armor, Food
 from world import Room
 
 ROOM_THEMES = [
@@ -95,7 +95,20 @@ WEAPON_TEMPLATES = [
 ]
 
 POTION_TEMPLATES = [
-    {"name": "Healing Potion", "description": "A dull red vial that smells faintly of herbs.", "heal": (10, 15)},
+    {"name": "Healing Potion", "description": "A dull red vial that smells faintly of herbs.",    "kind": "heal",   "power": (10, 15)},
+    {"name": "Vial of Acid",   "description": "A hissing green liquid, best thrown, not drunk.",   "kind": "damage", "power": (8, 14)},
+]
+
+ARMOR_TEMPLATES = [
+    {"name": "Cloth Armor",   "description": "Simple woven robes, better than nothing.",                  "block": (0, 4),  "str_req": 5},
+    {"name": "Leather Armor", "description": "Boiled leather plates stitched over a hide vest.",           "block": (1, 8),  "str_req": 8},
+    {"name": "Mail Armor",    "description": "Interlocking iron rings form a flexible shirt.",              "block": (2, 12), "str_req": 11},
+    {"name": "Scale Armor",   "description": "Overlapping metal scales riveted to a leather backing.",     "block": (3, 16), "str_req": 14},
+    {"name": "Plate Armor",   "description": "A full suit of forged steel plate.",                         "block": (4, 20), "str_req": 18},
+]
+
+FOOD_TEMPLATES = [
+    {"name": "Rations", "description": "Dried meat, hardtack, and a bit of salt.", "satiety": 100},
 ]
 
 DIRECTIONS = {"north": (0, 1), "south": (0, -1), "east": (1, 0), "west": (-1, 0)}
@@ -202,17 +215,30 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
             room.monsters.append(Monster(template["name"], hp, atk_min, atk_max, XP=xp, GOLD=gold))
 
         if random.random() < 0.5:
-            if random.random() < 0.5:
+            category = random.choice(["weapon", "potion", "armor", "food"])
+            if category == "weapon":
                 wt = random.choice(WEAPON_TEMPLATES)
                 damage_min, damage_max = wt["damage"]
                 room.items.append(Weapon(
                     wt["name"], wt["description"], damage_min, damage_max,
                     wt.get("str_req", 0), wt.get("attack_bonus", 0),
                 ))
-            else:
+            elif category == "potion":
                 pt = random.choice(POTION_TEMPLATES)
-                heal = random.randint(*pt["heal"])
-                room.items.append(Potion(pt["name"], pt["description"], heal))
+                power = pt["power"]
+                if isinstance(power, tuple):
+                    power = random.randint(*power)
+                room.items.append(Potion(pt["name"], pt["description"], pt["kind"], power, pt.get("duration", 0)))
+            elif category == "armor":
+                at = random.choice(ARMOR_TEMPLATES)
+                block_min, block_max = at["block"]
+                room.items.append(Armor(
+                    at["name"], at["description"], block_min, block_max,
+                    at.get("str_req", 0),
+                ))
+            else:
+                ft = random.choice(FOOD_TEMPLATES)
+                room.items.append(Food(ft["name"], ft["description"], ft["satiety"]))
 
     if place_amulet:
         goal_room.items.append(Item(

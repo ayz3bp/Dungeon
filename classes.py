@@ -22,9 +22,11 @@ def _weapon(template_name):
 
 def _potion(template_name):
     template = next(t for t in POTION_TEMPLATES if t["name"] == template_name)
-    low, high = template["heal"]
-    heal = (low + high) // 2
-    return Potion(template["name"], template["description"], heal)
+    power = template["power"]
+    if isinstance(power, tuple):
+        low, high = power
+        power = (low + high) // 2
+    return Potion(template["name"], template["description"], template["kind"], power, template.get("duration", 0))
 
 
 CLASSES = [
@@ -46,7 +48,7 @@ CLASSES = [
     {
         "name": "Mage",
         "description": "Frail in body but powerful in mind, wielding intellect over muscle.",
-        "stat_bonuses": {"INT": 1, "RES": 1, "BMP":5},
+        "stat_bonuses": {"INT": 1, "PWR": 1, "BMP":5},
         "starting_weapon": "Wand",
         "starting_potions": ["Healing Potion"],
     },

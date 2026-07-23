@@ -14,7 +14,7 @@ def _prompt_choice(options, label):
             f"{stat} {value:+d}" for stat, value in opt["stat_bonuses"].items() if value != 0
         )
         if bonuses:
-            print(f"     ({bonuses})")
+            print(f"({bonuses})")
     while True:
         raw = input(f"Enter a {label} name: ").strip()
         selected_name = raw.casefold()
