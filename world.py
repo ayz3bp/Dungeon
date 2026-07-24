@@ -64,8 +64,6 @@ class Room:
         if self.exits:
             exit_list = ", ".join(sorted(self.exits.keys()))
             lines.append(f"Exits: {exit_list}")
-        else:
-            lines.append("There are no obvious exits.")
         living = [m for m in self.monsters if m.alive]
         if living:
             lines.append(
@@ -149,8 +147,7 @@ class GameState:
                 damage_taken = max(0, retaliation - block)
                 self.player.hp = max(0, self.player.hp - damage_taken)
                 print(
-                    f"The {monster.name} claws back for {retaliation} damage. "
-                    f"You block {block} of it, taking {damage_taken}. "
+                    f"The {monster.name} claws back for {damage_taken} damage. "
                     f"({self.player.hp}/{self.player.max_hp} HP)"
                 )
 
@@ -179,11 +176,6 @@ class GameState:
         if not self.current_room.stairs_down:
             print("There are no stairs down here.")
             return
-        living_here = [m for m in self.current_room.monsters if m.alive]
-        if living_here:
-            names = ", ".join(m.name for m in living_here)
-            print(f"You can't descend — the {names} is blocking your way! Fight or flee.")
-            return
 
         import floors
         next_depth = self.depth + 1
@@ -199,6 +191,13 @@ class GameState:
             self.current_room.next_floor_entry = entry_room
             restored_visited = {entry_room}
 
+        # Leaving costs the turns, so anything still alive in this room gets
+        # its attacks in now, before you're gone — arriving downstairs doesn't
+        # trigger anything on its own.
+        self.advance_turns(MOVE_TURN_COST)
+        if not self.running:
+            return
+
         self.floor_stack.append((self.current_room, self.depth, self.act, self.visited))
 
         self.current_room = entry_room
@@ -209,9 +208,7 @@ class GameState:
             print(f"\nYou feel the nature of the dungeon shift as you descend... (Act {new_act})")
         self.act = new_act
         print(f"You descend to depth {self.depth}.\n")
-        self.advance_turns(MOVE_TURN_COST)
-        if self.running:
-            print(self.current_room.describe())
+        print(self.current_room.describe())
 
     def ascend(self):
         """Return to the previous floor's stairs-down room, exactly as you left it."""
@@ -226,10 +223,12 @@ class GameState:
             # trigger — but guard anyway rather than returning to camp.
             print("This passage seems to lead nowhere. Best not to risk it.")
             return
-        living_here = [m for m in self.current_room.monsters if m.alive]
-        if living_here:
-            names = ", ".join(m.name for m in living_here)
-            print(f"You can't ascend — the {names} is blocking your way! Fight or flee.")
+
+        # Leaving costs the turns, so anything still alive in this room gets
+        # its attacks in now, before you're gone — arriving upstairs doesn't
+        # trigger anything on its own.
+        self.advance_turns(MOVE_TURN_COST)
+        if not self.running:
             return
 
         # Save this floor's progress so descending these same stairs again
@@ -242,24 +241,25 @@ class GameState:
         self.depth = prev_depth
         self.act = prev_act
         print(f"You climb back up to depth {self.depth}.\n")
-        self.advance_turns(MOVE_TURN_COST)
-        if self.running:
-            print(self.current_room.describe())
+        print(self.current_room.describe())
 
     def move(self, direction):
-        living_here = [m for m in self.current_room.monsters if m.alive]
-        if living_here:
-            names = ", ".join(m.name for m in living_here)
-            print(f"You can't leave — the {names} is blocking your way! Fight or flee.")
-            return
-        if direction in self.current_room.exits:
-            self.current_room = self.current_room.exits[direction]
-            self.visited.add(self.current_room)
-            self.advance_turns(MOVE_TURN_COST)
-            if self.running:
-                print(self.current_room.describe())
-        else:
+        if direction not in self.current_room.exits:
             print("You can't go that way.")
+            return
+
+        destination = self.current_room.exits[direction]
+
+        # Leaving costs the turns, so anything still alive in this room gets
+        # its attacks in now, before you're gone — walking into the new room
+        # doesn't trigger anything on its own.
+        self.advance_turns(MOVE_TURN_COST)
+        if not self.running:
+            return
+
+        self.current_room = destination
+        self.visited.add(self.current_room)
+        print(self.current_room.describe())
 
     def find_monster(self, name_fragment):
         """Find a living monster in the current room by partial name match."""
@@ -305,16 +305,23 @@ class GameState:
         self.advance_turns(ATTACK_TURN_COST)
 
     def flee(self, direction):
-        """Attempt to escape combat by moving, ignoring the monster-blocks-exit rule."""
-        if direction in self.current_room.exits:
-            self.current_room = self.current_room.exits[direction]
-            self.visited.add(self.current_room)
-            print(f"You break away and flee {direction}!")
-            self.advance_turns(MOVE_TURN_COST)
-            if self.running:
-                print(self.current_room.describe())
-        else:
+        """Attempt to escape combat by moving to another room."""
+        if direction not in self.current_room.exits:
             print("You can't flee that way.")
+            return
+
+        destination = self.current_room.exits[direction]
+        print(f"You break away and flee {direction}!")
+
+        # Leaving costs the turns, so anything still alive in this room gets
+        # its attacks in now, before you're gone.
+        self.advance_turns(MOVE_TURN_COST)
+        if not self.running:
+            return
+
+        self.current_room = destination
+        self.visited.add(self.current_room)
+        print(self.current_room.describe())
 
     def render_map(self):
         """
@@ -459,8 +466,7 @@ class GameState:
             self.player.equipped_weapon = item
             low, high = self.player.damage_range
             print(
-                f"You equip the {item.name} ({item.damage_min}-{item.damage_max} base damage, "
-                f"damage becomes {low}-{high})."
+                f"You equip the {item.name} ({item.damage_min}-{item.damage_max} base damage)"
             )
         elif isinstance(item, Armor):
             if self.player.STR < item.str_req:
@@ -472,8 +478,7 @@ class GameState:
             self.player.equipped_armor = item
             low, high = self.player.block_range
             print(
-                f"You equip the {item.name} ({item.block_min}-{item.block_max} base block, "
-                f"block becomes {low}-{high})."
+                f"You equip the {item.name} ({item.block_min}-{item.block_max} base block) "
             )
         elif isinstance(item, Food):
             for message in self.player.eat(item.name, item.satiety_restore):
@@ -537,7 +542,7 @@ class GameState:
             for level in levels_gained:
                 print(
                     f"\n*** Level up! You are now level {level}. ***\n"
-                    f"You gain a stat point (use 'level <stat>' to spend it) "
+                    f"You have gained 2 stat points (use 'level <stat>' to spend it) "
                     f"and recover a bit of HP/MP."
                 )
 

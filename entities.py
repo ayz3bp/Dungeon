@@ -181,13 +181,13 @@ class Player:
         b = self.flat_bonuses
         self.max_hp = (self.LVL * 2) + (self.CON * 5) + b["BHP"]
         self.AC = max(0, self.CON // 5) + b["AC"]
-        self.RES = max(0, self.CON // 10) + b["RES"]
-        self.PWR = max(0, self.INT) + b["PWR"]
-        self.EVA = 2 + max(0, self.DEX // 2) + max(0, self.LVL // 2) + b["EVA"]
+        self.RES = max(0, self.CON // 5) + b["RES"]
+        self.PWR = max(0, self.INT//2) + b["PWR"]
+        self.EVA = 1 + max(0, self.DEX // 2) + max(0, self.LVL // 2) + b["EVA"]
         self.ACC = 6 + max(0, self.LVL) + b["ACC"]
         self.max_MP = max(0, self.INT * 2) + b["BMP"] + self.LVL
-        self.REG = max(1, self.CON // 5) + b["REG"]
-        self.MPG = max(5, self.INT // 5) + b["MPG"]
+        self.REG = max(0, self.CON // 10) + b["REG"]
+        self.MPG = max(0, self.INT // 5) + b["MPG"]
 
     def gain_xp(self, amount):
         """

@@ -75,7 +75,7 @@ def handle_command(verb, rest, state):
         xp_display = (
             f"{p.XP}/{p.xp_to_next_level}" if p.xp_to_next_level is not None else f"{p.XP} (MAX)"
         )
-        print(f"{p.name} the {p.race} {p.class_name}")
+        print(f"{p.name} the Level {p.LVL} {p.race} {p.class_name}")
         print(
             f"HP: {p.hp}/{p.max_hp}  MP: {p.MP}/{p.max_MP}  |  "
             f"REG: {p.REG}  "  
@@ -89,7 +89,7 @@ def handle_command(verb, rest, state):
         )
         print(
             f"CON: {p.CON}  STR: {p.STR}  DEX: {p.DEX}  INT: {p.INT}  |  "
-            f"Level: {p.LVL}  XP: {xp_display}"
+            f"XP: {xp_display}"
         )
         print(f"Weapon: {weapon}  |  Armor: {armor}  |  Location: {location}  |  Gold: {p.gold}")
         if p.hunger_tier != "full":
@@ -108,15 +108,19 @@ def handle_command(verb, rest, state):
 
     elif verb in ("take", "get", "pickup"):
         state.take(rest)
+        state.advance_turns(1)
 
     elif verb == "drop":
         state.drop(rest)
+        state.advance_turns(1)
 
     elif verb == "use":
         state.use(rest)
+        state.advance_turns(0.5)
 
     elif verb == "drink":
         state.drink(rest)
+        state.advance_turns(0.5)
 
     elif verb == "throw":
         if not rest:
@@ -124,9 +128,11 @@ def handle_command(verb, rest, state):
         else:
             if " at " in rest:
                 item_part, _, target_part = rest.partition(" at ")
+                state.advance_turns(0.5)
             else:
                 item_part, target_part = rest, ""
             state.throw(item_part.strip(), target_part.strip())
+            state.advance_turns(0.5)
 
     elif verb == "inventory" or verb == "i":
         if not state.player.inventory:
