@@ -40,6 +40,7 @@ def make_hub_room():
         "the earth. Type 'enter' when you're ready to descend."
     )
     hub.coord = (0, 0)
+    hub.size = 0  # not a dungeon room — nothing to explore here
     return hub
 
 

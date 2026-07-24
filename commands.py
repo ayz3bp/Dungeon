@@ -9,6 +9,7 @@ Commands:
   descend             - take the stairs down to the next floor (when present)
   ascend              - take the stairs back up to the previous floor (when present)
   go <direction>      - move (north, south, east, west)
+  explore             - search the current room for more loot, enemies, or puzzle progress (1 turn)
   attack [target]     - attack a monster in the room (defaults to the first one)
   flee <direction>    - break off combat and move to an adjacent room
   status              - show your character stats and current location
@@ -60,6 +61,9 @@ def handle_command(verb, rest, state):
 
     elif verb in ("attack", "a", "fight"):
         state.attack(rest)
+
+    elif verb == "explore":
+        state.explore()
 
     elif verb == "flee":
         if not rest:
@@ -144,14 +148,16 @@ def handle_command(verb, rest, state):
                 else:
                     tag = ""
                 if hasattr(item, "damage_min"):
+                    reqs = ", ".join(f"{stat} {req}" for stat, req in item.requirements.items()) or "None"
                     details = (
                         f" [{item.damage_min}-{item.damage_max} damage, "
-                        f"STR Req {item.str_req}, ATK +{item.attack_bonus}]"
+                        f"Req {reqs}, ATK +{item.attack_bonus}]"
                     )
                 elif hasattr(item, "block_min"):
+                    reqs = ", ".join(f"{stat} {req}" for stat, req in item.requirements.items()) or "None"
                     details = (
                         f" [{item.block_min}-{item.block_max} block, "
-                        f"STR Req {item.str_req}]"
+                        f"Req {reqs}]"
                     )
                 elif hasattr(item, "satiety_restore"):
                     details = f" [restores {item.satiety_restore} satiety]"

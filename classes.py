@@ -16,7 +16,7 @@ def _weapon(template_name):
     damage_min, damage_max = template["damage"]
     return Weapon(
         template["name"], template["description"], damage_min, damage_max,
-        template.get("str_req", 0), template.get("attack_bonus", 0),
+        template.get("requirements", {}), template.get("attack_bonus", 0),
     )
 
 

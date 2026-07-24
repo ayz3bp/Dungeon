@@ -44,54 +44,57 @@ MONSTER_TEMPLATES = [
 
 WEAPON_TEMPLATES = [
     #Tier 1 weapons
-    {"name": "Dirk",            "description": "A simple, short blade.",                                        "damage": (2, 12), "str_req": 7},
-    {"name": "Sword",           "description": "A well-balanced blade.",                                        "damage": (2, 15), "str_req": 7},
-    {"name": "Hand Axe",        "description": "Most commonly used to fell trees.",                             "damage": (2, 14), "str_req": 7},
-    {"name": "Quarterstaff",    "description": "A balanced wooden staff, tipped in iron.",                      "damage": (2, 12), "str_req": 8},
-    {"name": "Spear",           "description": "A long polearm with a sharpened iron tip.",                     "damage": (2, 18), "str_req": 8},
-    {"name": "Hunting Bow",     "description": "A simple ranged weapon for hunting game.",                      "damage": (2, 20), "str_req": 8},
+    {"name": "Dirk",            "description": "A simple, short blade.",                                        "damage": (2, 12), "requirements": {"STR": 7}},
+    {"name": "Sword",           "description": "A well-balanced blade.",                                        "damage": (2, 15), "requirements": {"STR": 7}},
+    {"name": "Hand Axe",        "description": "Most commonly used to fell trees.",                             "damage": (2, 14), "requirements": {"STR": 7}},
+    {"name": "Quarterstaff",    "description": "A balanced wooden staff, tipped in iron.",                      "damage": (2, 12), "requirements": {"STR": 8}},
+    {"name": "Spear",           "description": "A long polearm with a sharpened iron tip.",                     "damage": (2, 18), "requirements": {"STR": 8}},
+    {"name": "Hunting Bow",     "description": "A simple ranged weapon for hunting game.",                      "damage": (2, 20), "requirements": {"STR": 8}},
     
     #Tier 2 weapons
-    {"name": "Mace",            "description": "A wicked, spiked ball tops this cruel weapon.",                 "damage": (3, 22), "str_req": 10},
-    {"name": "Scimitar",        "description": "A blade that cuts through the air with deadly grace.",          "damage": (3, 22), "str_req": 10},
-    {"name": "Shield",          "description": "A sturdy barrier against incoming attacks.",                    "damage": (3, 20), "str_req": 11},
-    {"name": "Axe",             "description": "A two-handed axe with a sharp edge.",                           "damage": (3, 24), "str_req": 11},
-    {"name": "Halberd",         "description": "A polearm adorned with with a steel blade.",                    "damage": (3, 24), "str_req": 11},
-    {"name": "Battle Hammer",   "description": "A  weapon designed for crushing bones and armor.",              "damage": (3, 26), "str_req": 12},
-    {"name": "Long Bow",        "description": "A ranged weapon designed to pierce and maim.",                  "damage": (3, 28), "str_req": 12},
-    {"name": "Stiletto",        "description": "A thin, needle-like blade.",                                    "damage": (3, 20), "str_req": 10},
+    {"name": "Mace",            "description": "A wicked, spiked ball tops this cruel weapon.",                 "damage": (3, 22), "requirements": {"STR": 10}},
+    {"name": "Scimitar",        "description": "A blade that cuts through the air with deadly grace.",          "damage": (3, 22), "requirements": {"STR": 10}},
+    {"name": "Shield",          "description": "A sturdy barrier against incoming attacks.",                    "damage": (3, 20), "requirements": {"STR": 11}},
+    {"name": "Axe",             "description": "A two-handed axe with a sharp edge.",                           "damage": (3, 24), "requirements": {"STR": 11}},
+    {"name": "Halberd",         "description": "A polearm adorned with with a steel blade.",                    "damage": (3, 24), "requirements": {"STR": 11}},
+    {"name": "Battle Hammer",   "description": "A  weapon designed for crushing bones and armor.",              "damage": (3, 26), "requirements": {"STR": 12}},
+    {"name": "Long Bow",        "description": "A ranged weapon designed to pierce and maim.",                  "damage": (3, 28), "requirements": {"STR": 12}},
+    {"name": "Stiletto",        "description": "A thin, needle-like blade.",                                    "damage": (3, 20), "requirements": {"STR": 10}},
 
     #Tier 3 weapons
-    {"name": "Morningstar",     "description": "A spiked head tops the metal shaft of this instrument.",        "damage": (4, 25), "str_req": 14},
-    {"name": "Long Sword",      "description": "A double-edged blade that cuts enemies with precision.",        "damage": (4, 25), "str_req": 14},
-    {"name": "Crossbow",        "description": "A mechanical system that fires bolts with great force.",        "damage": (4, 34), "str_req": 15},
-    {"name": "Repeating Bow",   "description": "A bow that can unleash a storm of arrows.",                     "damage": (4, 30), "str_req": 15},
-    {"name": "Whip",            "description": "This deadly length of rope lashes with precision.",             "damage": (4, 24), "str_req": 13},
-    {"name": "Hidden Blade",    "description": "A concealed blade tucked under the sleeve.",                    "damage": (4, 24), "str_req": 13},
-    {"name": "Scythe",          "description": "A farming instrument turned deadly weapon.",                    "damage": (4, 32), "str_req": 15},
+    {"name": "Morningstar",     "description": "A spiked head tops the metal shaft of this instrument.",        "damage": (4, 25), "requirements": {"STR": 14}},
+    {"name": "Long Sword",      "description": "A double-edged blade that cuts enemies with precision.",        "damage": (4, 25), "requirements": {"STR": 14}},
+    {"name": "Crossbow",        "description": "A mechanical system that fires bolts with great force.",        "damage": (4, 34), "requirements": {"STR": 15}},
+    {"name": "Repeating Bow",   "description": "A bow that can unleash a storm of arrows.",                     "damage": (4, 30), "requirements": {"STR": 15}},
+    {"name": "Whip",            "description": "This deadly length of rope lashes with precision.",             "damage": (4, 24), "requirements": {"STR": 13}},
+    {"name": "Hidden Blade",    "description": "A concealed blade tucked under the sleeve.",                    "damage": (4, 24), "requirements": {"STR": 13}},
+    {"name": "Scythe",          "description": "A farming instrument turned deadly weapon.",                    "damage": (4, 32), "requirements": {"STR": 15}},
 
     #Tier 4 weapons
-    {"name": "Battle Axe",      "description": "The enormous head of this weapon cuts down enemies with ease.", "damage": (5, 32), "str_req": 17},
-    {"name": "Glaive",          "description": "The reach of this hefty weapon is unmatched.",                  "damage": (5, 38), "str_req": 17},
-    {"name": "Greatsword",      "description": "This mighty blade strikes with tremendous force.",              "damage": (5, 30), "str_req": 17},
-    {"name": "War Hammer",      "description": "This crushing lump of steel and lead pulverizes enemies.",      "damage": (5, 34), "str_req": 18},
-    {"name": "Assassin's Blade","description": "This hidden dagger is favored by the shadows.",                 "damage": (5, 28), "str_req": 16},
-    {"name": "Great Shield",    "description": "A towering mass of metal stops any attack.",                    "damage": (5, 28), "str_req": 18},
-    {"name": "Recurve Bow",     "description": "This massive bow with curved limbs fires enormous bolts.",      "damage": (5, 40), "str_req": 18},
+    {"name": "Battle Axe",      "description": "The enormous head of this weapon cuts down enemies with ease.", "damage": (5, 32), "requirements": {"STR": 17}},
+    {"name": "Glaive",          "description": "The reach of this hefty weapon is unmatched.",                  "damage": (5, 38), "requirements": {"STR": 17}},
+    {"name": "Greatsword",      "description": "This mighty blade strikes with tremendous force.",              "damage": (5, 30), "requirements": {"STR": 17}},
+    {"name": "War Hammer",      "description": "This crushing lump of steel and lead pulverizes enemies.",      "damage": (5, 34), "requirements": {"STR": 18}},
+    {"name": "Assassin's Blade","description": "This hidden dagger is favored by the shadows.",                 "damage": (5, 28), "requirements": {"STR": 16}},
+    {"name": "Great Shield",    "description": "A towering mass of metal stops any attack.",                    "damage": (5, 28), "requirements": {"STR": 18}},
+    {"name": "Recurve Bow",     "description": "This massive bow with curved limbs fires enormous bolts.",      "damage": (5, 40), "requirements": {"STR": 18}},
 
     #Tier 5 weapons
-    {"name": "Zewihander",      "description": "More slab of metal than blade, this weapon is unstoppable.",            "damage": (7, 35), "str_req": 21},
-    {"name": "War Maul",        "description": "A massive chunk of metal. Crushes anything in its path.",               "damage": (7, 40), "str_req": 21},
-    {"name": "Greataxe",        "description": "Dual blades adorn this weapon of pure force.",                          "damage": (7, 38), "str_req": 21},
-    {"name": "War Bow",         "description": "This instrument of ruin  fires bolts designed to destroy castles.",     "damage": (7, 45), "str_req": 21},
+    {"name": "Zewihander",      "description": "More slab of metal than blade, this weapon is unstoppable.",            "damage": (7, 35), "requirements": {"STR": 21}},
+    {"name": "War Maul",        "description": "A massive chunk of metal. Crushes anything in its path.",               "damage": (7, 40), "requirements": {"STR": 21}},
+    {"name": "Greataxe",        "description": "Dual blades adorn this weapon of pure force.",                          "damage": (7, 38), "requirements": {"STR": 21}},
+    {"name": "War Bow",         "description": "This instrument of ruin  fires bolts designed to destroy castles.",     "damage": (7, 45), "requirements": {"STR": 21}},
 
     #Tier 0 weapons
-    {"name": "Wand",            "description": "A simple yew wand to channel magic.",                                   "damage": (1, 6), "str_req": 5},
-    {"name": "Short Bow",       "description": "A simple bow designed for quick shots.",                                "damage": (1, 12), "str_req": 5},
-    {"name": "Dagger",          "description": "A simple, short blade.",                                                "damage": (1, 8), "str_req": 5},
-    {"name": "Short Sword",     "description": "A well-balanced blade.",                                                "damage": (1, 10), "str_req": 5} 
+    {"name": "Wand",            "description": "A simple yew wand to channel magic.",                                   "damage": (1, 6), "requirements": {"STR": 5}},
+    {"name": "Short Bow",       "description": "A simple bow designed for quick shots.",                                "damage": (1, 12), "requirements": {"STR": 5}},
+    {"name": "Dagger",          "description": "A simple, short blade.",                                                "damage": (1, 8), "requirements": {"STR": 5}},
+    {"name": "Short Sword",     "description": "A well-balanced blade.",                                                "damage": (1, 10), "requirements": {"STR": 5}},
 
-
+    #Finesse/arcane weapons (non-STR requirements)
+    {"name": "Rapier",          "description": "A slender blade built for speed, not force.",                          "damage": (3, 22), "requirements": {"DEX": 12}},
+    {"name": "Focus Rod",       "description": "A carved rod that channels the wielder's mind into raw force.",       "damage": (3, 24), "requirements": {"INT": 12}},
+    {"name": "Duelist's Blade", "description": "A precise blade that rewards both power and poise.",                   "damage": (4, 26), "requirements": {"STR": 8, "DEX": 12}},
 ]
 
 POTION_TEMPLATES = [
@@ -100,18 +103,41 @@ POTION_TEMPLATES = [
 ]
 
 ARMOR_TEMPLATES = [
-    {"name": "Cloth Armor",   "description": "Simple woven robes, better than nothing.",                  "block": (0, 4),  "str_req": 5},
-    {"name": "Leather Armor", "description": "Boiled leather plates stitched over a hide vest.",           "block": (1, 8),  "str_req": 8},
-    {"name": "Mail Armor",    "description": "Interlocking iron rings form a flexible shirt.",              "block": (2, 12), "str_req": 11},
-    {"name": "Scale Armor",   "description": "Overlapping metal scales riveted to a leather backing.",     "block": (3, 16), "str_req": 14},
-    {"name": "Plate Armor",   "description": "A full suit of forged steel plate.",                         "block": (4, 20), "str_req": 18},
+    {"name": "Cloth Armor",   "description": "Simple woven robes, better than nothing.",                  "block": (0, 4),  "requirements": {"STR": 5}},
+    {"name": "Leather Armor", "description": "Boiled leather plates stitched over a hide vest.",           "block": (1, 8),  "requirements": {"STR": 8}},
+    {"name": "Mail Armor",    "description": "Interlocking iron rings form a flexible shirt.",              "block": (2, 12), "requirements": {"STR": 11}},
+    {"name": "Scale Armor",   "description": "Overlapping metal scales riveted to a leather backing.",     "block": (3, 16), "requirements": {"STR": 14}},
+    {"name": "Plate Armor",   "description": "A full suit of forged steel plate.",                         "block": (4, 20), "requirements": {"STR": 18}},
+    {"name": "Bulwark Plate", "description": "Impossibly dense armor that only a hardy body can bear.",    "block": (4, 22), "requirements": {"CON": 14}},
 ]
 
 FOOD_TEMPLATES = [
     {"name": "Rations", "description": "Dried meat, hardtack, and a bit of salt.", "satiety": 100},
 ]
 
+# Room.size weights: smaller rooms are more common than sprawling ones.
+ROOM_SIZE_WEIGHTS = [(1, 40), (2, 35), (3, 18), (4, 7)]
+
+# Flavor text for puzzle rooms — filled into "You notice {puzzle_kind}
+# here." and the solve message in GameState.explore().
+PUZZLE_KINDS = [
+    "a rusted, jammed mechanism",
+    "a rune-carved lock",
+    "a set of shifting floor tiles",
+    "a stuck vault wheel",
+    "a cryptic star-chart etched into the wall",
+]
+
+# Chance any given non-entry, non-goal room is a puzzle room instead of a
+# normal one.
+PUZZLE_ROOM_CHANCE = 0.15
+
 DIRECTIONS = {"north": (0, 1), "south": (0, -1), "east": (1, 0), "west": (-1, 0)}
+
+
+def _roll_room_size():
+    sizes, weights = zip(*ROOM_SIZE_WEIGHTS)
+    return random.choices(sizes, weights=weights, k=1)[0]
 
 
 def _weighted_choice(templates):
@@ -123,6 +149,54 @@ def _weighted_choice(templates):
         if roll <= upto:
             return t
     return templates[-1]
+
+
+def _roll_item(category=None):
+    """Build one randomly-rolled Item. `category` picks weapon/potion/
+    armor/food explicitly; otherwise one is chosen uniformly. Shared by
+    initial dungeon generation and GameState.explore()'s loot rolls."""
+    if category is None:
+        category = random.choice(["weapon", "potion", "armor", "food"])
+
+    if category == "weapon":
+        wt = random.choice(WEAPON_TEMPLATES)
+        damage_min, damage_max = wt["damage"]
+        return Weapon(
+            wt["name"], wt["description"], damage_min, damage_max,
+            wt.get("requirements", {}), wt.get("attack_bonus", 0),
+        )
+    elif category == "potion":
+        pt = random.choice(POTION_TEMPLATES)
+        power = pt["power"]
+        if isinstance(power, tuple):
+            power = random.randint(*power)
+        return Potion(pt["name"], pt["description"], pt["kind"], power, pt.get("duration", 0))
+    elif category == "armor":
+        at = random.choice(ARMOR_TEMPLATES)
+        block_min, block_max = at["block"]
+        return Armor(at["name"], at["description"], block_min, block_max, at.get("requirements", {}))
+    else:
+        ft = random.choice(FOOD_TEMPLATES)
+        return Food(ft["name"], ft["description"], ft["satiety"])
+
+
+def roll_explore_loot():
+    """Public entry point for GameState.explore(): one randomly-rolled item."""
+    return _roll_item()
+
+
+def roll_ambush_monster(depth):
+    """Public entry point for GameState.explore(): one randomly-rolled
+    monster appropriate for an ambush at the given floor depth."""
+    depth_shift = (depth - 1) // 2
+    tier = min(3, random.randint(1, 2) + depth_shift)
+    candidates = [t for t in MONSTER_TEMPLATES if t["tier"] == tier] or MONSTER_TEMPLATES
+    template = _weighted_choice(candidates)
+    hp = random.randint(*template["hp"])
+    atk_min, atk_max = template["atk"]
+    xp = random.randint(*template["xp"])
+    gold = random.randint(*template["gold"])
+    return Monster(template["name"], hp, atk_min, atk_max, XP=xp, GOLD=gold)
 
 
 def _bfs_distances(entry):
@@ -162,6 +236,7 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
     coord_to_room = {}
     entry = Room(*next_theme(0))
     entry.coord = (0, 0)
+    entry.size = _roll_room_size()
     coord_to_room[(0, 0)] = entry
     placed_coords = [(0, 0)]
 
@@ -178,6 +253,7 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
             continue
         new_room = Room(*next_theme(theme_index))
         new_room.coord = new_coord
+        new_room.size = _roll_room_size()
         theme_index += 1
         coord_to_room[new_coord] = new_room
         placed_coords.append(new_coord)
@@ -203,6 +279,10 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
         if room is entry or room is goal_room:
             continue
 
+        if random.random() < PUZZLE_ROOM_CHANCE:
+            room.room_type = "puzzle"
+            room.puzzle_kind = random.choice(PUZZLE_KINDS)
+
         if random.random() < 0.6:
             base_tier = 1 if room_dist <= 1 else (2 if room_dist <= 3 else 3)
             tier = min(3, base_tier + depth_shift)
@@ -215,30 +295,7 @@ def generate_dungeon(num_rooms=8, depth=1, place_amulet=True):
             room.monsters.append(Monster(template["name"], hp, atk_min, atk_max, XP=xp, GOLD=gold))
 
         if random.random() < 0.5:
-            category = random.choice(["weapon", "potion", "armor", "food"])
-            if category == "weapon":
-                wt = random.choice(WEAPON_TEMPLATES)
-                damage_min, damage_max = wt["damage"]
-                room.items.append(Weapon(
-                    wt["name"], wt["description"], damage_min, damage_max,
-                    wt.get("str_req", 0), wt.get("attack_bonus", 0),
-                ))
-            elif category == "potion":
-                pt = random.choice(POTION_TEMPLATES)
-                power = pt["power"]
-                if isinstance(power, tuple):
-                    power = random.randint(*power)
-                room.items.append(Potion(pt["name"], pt["description"], pt["kind"], power, pt.get("duration", 0)))
-            elif category == "armor":
-                at = random.choice(ARMOR_TEMPLATES)
-                block_min, block_max = at["block"]
-                room.items.append(Armor(
-                    at["name"], at["description"], block_min, block_max,
-                    at.get("str_req", 0),
-                ))
-            else:
-                ft = random.choice(FOOD_TEMPLATES)
-                room.items.append(Food(ft["name"], ft["description"], ft["satiety"]))
+            room.items.append(_roll_item())
 
     if place_amulet:
         goal_room.items.append(Item(

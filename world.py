@@ -2,6 +2,7 @@
 that tracks the player's position, combat, inventory, and minimap."""
 
 import math
+import random
 
 from items import Weapon, Potion, Armor, Food
 
@@ -11,6 +12,7 @@ from items import Weapon, Potion, Armor, Food
 # with everything else.
 MOVE_TURN_COST = 2      # moving/fleeing/using stairs between rooms
 ATTACK_TURN_COST = 0.5  # a single attack with a base weapon
+EXPLORE_TURN_COST = 1   # searching the current room for more loot/enemies
 
 
 def _apply_potion_effect(potion, entity):
@@ -36,6 +38,11 @@ def _apply_potion_effect(potion, entity):
 
 
 class Room:
+    # Flavor label shown for each size, and how many extra descriptions
+    # a bigger room supports (see explore() in GameState below): a size-1
+    # room dries up after 1 explore, a size-4 room after 4.
+    SIZE_LABELS = {1: "Cramped", 2: "Modest", 3: "Spacious", 4: "Grand"}
+
     def __init__(self, name, description):
         self.name = name
         self.description = description
@@ -46,6 +53,14 @@ class Room:
         self.stairs_down = False  # True on a floor's goal room, unless it holds the Amulet
         self.stairs_up = False    # True on a floor's entry room, except floor 1 (camp doesn't count)
         self.next_floor_entry = None  # cached entry room of the floor below, once generated
+
+        # Exploration state (see generation.py for how these get set, and
+        # GameState.explore() for how they're used).
+        self.size = 1               # 1-4, how much this room supports exploring
+        self.room_type = "normal"   # "normal" or "puzzle"
+        self.puzzle_kind = None     # flavor text naming the puzzle, if any
+        self.puzzle_solved = False  # only meaningful for room_type == "puzzle"
+        self.explore_progress = 0   # times explored (normal) / progress made (puzzle)
 
     def connect(self, direction, other_room, bidirectional=True):
         """Link this room to another room in a given direction."""
@@ -60,7 +75,9 @@ class Room:
             other_room.exits[opposite[direction]] = self
 
     def describe(self):
-        lines = [f"== {self.name} ==", self.description]
+        size_label = self.SIZE_LABELS.get(self.size)
+        header = f"== {self.name} ({size_label}) ==" if size_label else f"== {self.name} =="
+        lines = [header, self.description]
         if self.exits:
             exit_list = ", ".join(sorted(self.exits.keys()))
             lines.append(f"Exits: {exit_list}")
@@ -71,6 +88,10 @@ class Room:
             )
         if self.items:
             lines.append("Items here: " + ", ".join(i.name for i in self.items))
+        if self.room_type == "puzzle" and not self.puzzle_solved:
+            lines.append(f"You notice {self.puzzle_kind} here. (try 'explore')")
+        elif self.room_type == "normal" and self.explore_progress < self.size:
+            lines.append("This room looks like it might reward a closer look. (try 'explore')")
         if self.stairs_down:
             lines.append("A stairway leads down into darkness. (type 'descend' to continue)")
         if self.stairs_up:
@@ -323,6 +344,69 @@ class GameState:
         self.visited.add(self.current_room)
         print(self.current_room.describe())
 
+    def explore(self):
+        """
+        Search the current room for more than what's visible at a glance.
+        Costs 1 turn either way.
+
+        Puzzle rooms: each explore makes progress; once progress reaches
+        the room's size, the puzzle is solved and pays out a reward.
+        Normal rooms: each explore has a chance to turn up an item, spring
+        an ambush, or find nothing — up to `size` times, after which the
+        room is tapped out.
+        """
+        if not self.in_dungeon:
+            print("There's nothing to explore here.")
+            return
+
+        room = self.current_room
+        import generation  # local import: generation.py imports from this module
+
+        if room.room_type == "puzzle":
+            if room.puzzle_solved:
+                print(f"{room.puzzle_kind[0].upper()}{room.puzzle_kind[1:]} here has already given up its secrets.")
+                self.advance_turns(EXPLORE_TURN_COST)
+                return
+
+            room.explore_progress += 1
+            if room.explore_progress >= room.size:
+                room.puzzle_solved = True
+                reward = generation.roll_explore_loot()
+                room.items.append(reward)
+                gold = random.randint(5, 10) * self.depth
+                self.player.gold += gold
+                print(
+                    f"With one final effort, {room.puzzle_kind} gives way! "
+                    f"A hidden cache opens, revealing a {reward.name} and {gold} gold."
+                )
+            else:
+                print(
+                    f"You work at {room.puzzle_kind}. It feels close to giving way. "
+                    f"({room.explore_progress}/{room.size})"
+                )
+            self.advance_turns(EXPLORE_TURN_COST)
+            return
+
+        if room.explore_progress >= room.size:
+            print("You've thoroughly searched this room. There's nothing more to find.")
+            self.advance_turns(EXPLORE_TURN_COST)
+            return
+
+        room.explore_progress += 1
+        roll = random.random()
+        if roll < 0.15:
+            monster = generation.roll_ambush_monster(self.depth)
+            room.monsters.append(monster)
+            print(f"As you search, a {monster.name} lunges out at you!")
+        elif roll < 0.65:
+            item = generation.roll_explore_loot()
+            room.items.append(item)
+            print(f"Searching the room, you turn up a {item.name}.")
+        else:
+            print("You search the room but find nothing further of note.")
+
+        self.advance_turns(EXPLORE_TURN_COST)
+
     def render_map(self):
         """
         Build an ASCII minimap from rooms the player has actually visited.
@@ -457,11 +541,13 @@ class GameState:
         if isinstance(item, Potion):
             self.drink(name_fragment)
         elif isinstance(item, Weapon):
-            if self.player.STR < item.str_req:
-                print(
-                    f"You need STR {item.str_req} to wield the {item.name} "
-                    f"(you have {self.player.STR})."
+            unmet = item.unmet_requirements(self.player)
+            if unmet:
+                reqs = ", ".join(
+                    f"{stat} {required} (you have {getattr(self.player, stat, 0)})"
+                    for stat, required in unmet.items()
                 )
+                print(f"You need {reqs} to wield the {item.name}.")
                 return
             self.player.equipped_weapon = item
             low, high = self.player.damage_range
@@ -469,11 +555,13 @@ class GameState:
                 f"You equip the {item.name} ({item.damage_min}-{item.damage_max} base damage)"
             )
         elif isinstance(item, Armor):
-            if self.player.STR < item.str_req:
-                print(
-                    f"You need STR {item.str_req} to wear the {item.name} "
-                    f"(you have {self.player.STR})."
+            unmet = item.unmet_requirements(self.player)
+            if unmet:
+                reqs = ", ".join(
+                    f"{stat} {required} (you have {getattr(self.player, stat, 0)})"
+                    for stat, required in unmet.items()
                 )
+                print(f"You need {reqs} to wear the {item.name}.")
                 return
             self.player.equipped_armor = item
             low, high = self.player.block_range
