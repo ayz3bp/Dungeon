@@ -4,37 +4,176 @@ that tracks the player's position, combat, inventory, and minimap."""
 import math
 import random
 
+import statuses
 from items import Weapon, Potion, Armor, Food
 
 # Turn costs for player actions. Every action that takes in-game time
 # should go through GameState.advance_turns() with one of these (or a
 # future weapon/spell-specific cost) so hunger and regen stay in sync
-# with everything else.
+# with everything else. Attack/move costs can be shortened further by
+# Potion of Haste — see GameState._attack_cost/_move_cost.
 MOVE_TURN_COST = 2      # moving/fleeing/using stairs between rooms
 ATTACK_TURN_COST = 0.5  # a single attack with a base weapon
 EXPLORE_TURN_COST = 1   # searching the current room for more loot/enemies
+HASTE_MOVE_COST = 1     # move cost while Haste's move buff is active
+HASTE_MOVE_TURNS = 10   # duration of Haste's move buff (not on Potion.duration — see _apply_potion_effect)
 
 
-def _apply_potion_effect(potion, entity):
+def _unmet_requirements(item, player):
+    """
+    Stat requirements `player` doesn't meet for `item`, as a
+    {stat: required_value} dict — empty if they meet everything.
+
+    Computed directly from item.requirements rather than calling a
+    method on item, since that's the one thing every Weapon/Armor is
+    guaranteed to have (see items.py) regardless of what convenience
+    methods/properties a given copy of that file does or doesn't add.
+    """
+    return {
+        stat: required
+        for stat, required in item.requirements.items()
+        if getattr(player, stat, 0) < required
+    }
+
+
+def _apply_potion_effect(potion, entity, level):
     """
     Apply a potion's effect to `entity` — self.player when drunk, or a
     Monster when thrown — and return a short description of what
-    happened, for the caller to fold into its own message.
+    happened, for the caller to fold into its own message. `level` is
+    always the player's LVL: potions scale off whoever used them, not
+    the target, so a thrown Potion of Frost still hits as hard as the
+    player's level says it should.
 
-    To add a new potion kind, add a branch here. If a kind only makes
-    sense for one side (e.g. a future stat buff Monster doesn't carry),
-    guard it with hasattr(entity, ...) the way world.py already does
-    elsewhere, rather than assuming the target is always the player.
+    Kinds that only make sense for a Player (RES/REG/MPG/XP don't exist
+    on Monster) check with hasattr and no-op on anything else, the way
+    the module docstring already recommends.
+
+    Two kinds aren't handled here because they need the surrounding
+    GameState/room, not just the target entity — see
+    GameState._apply_toxic_gas / _apply_true_sight below, called
+    directly from drink()/throw() instead.
+
+    To add a new potion kind, add a branch here (or alongside
+    toxic_gas/true_sight if it needs room/GameState access).
     """
     if potion.kind == "heal":
         before = entity.hp
         entity.hp = min(entity.max_hp, entity.hp + potion.power)
         return f"restores {entity.hp - before} HP ({entity.hp}/{entity.max_hp} HP)"
+
     elif potion.kind == "damage":
         entity.hp = max(0, entity.hp - potion.power)
         return f"deals {potion.power} damage ({entity.hp}/{entity.max_hp} HP)"
+
+    elif potion.kind == "heal_over_time":
+        # 40% now, then 30%/20%/10% on each of the next three whole turns.
+        before = entity.hp
+        immediate = math.ceil(entity.max_hp * 0.40)
+        entity.hp = min(entity.max_hp, entity.hp + immediate)
+        statuses.apply_status(entity, "healing_potion", 3, schedule=[0.30, 0.20, 0.10])
+        return (
+            f"restores {entity.hp - before} HP now ({entity.hp}/{entity.max_hp} HP), "
+            f"with more to follow over the next 3 turns"
+        )
+
+    elif potion.kind == "purity":
+        if not hasattr(entity, "RES"):
+            return "has no effect"
+        already = statuses.has_status(entity, "purity")
+        statuses.apply_status(entity, "purity", potion.duration, res_bonus=5)
+        if already:
+            return f"renews the immunity and resistance for {potion.duration} more turns"
+        entity.RES += 5
+        return f"grants immunity to harmful effects and raises RES to {entity.RES} for {potion.duration} turns"
+
+    elif potion.kind == "levitation":
+        statuses.apply_status(entity, "levitation", potion.duration)
+        return f"grants levitation for {potion.duration} turns"
+
+    elif potion.kind == "haste":
+        statuses.apply_status(entity, "haste_action", potion.duration)
+        statuses.apply_status(entity, "haste_move", HASTE_MOVE_TURNS)
+        return f"quickens your actions for {potion.duration} turns and your steps for {HASTE_MOVE_TURNS}"
+
+    elif potion.kind == "rejuvenation":
+        if not hasattr(entity, "REG"):
+            return "has no effect"
+        already = statuses.has_status(entity, "rejuvenation")
+        if not already:
+            entity.REG += potion.power
+            entity.MPG += potion.power
+        statuses.apply_status(entity, "rejuvenation", potion.duration, reg_bonus=potion.power, mpg_bonus=potion.power)
+        if already:
+            return f"renews your rejuvenation for {potion.duration} more turns"
+        return f"raises your REG to {entity.REG} and MPG to {entity.MPG} for {potion.duration} turns"
+
+    elif potion.kind == "experience":
+        if not hasattr(entity, "gain_xp"):
+            return "has no effect"
+        if entity.xp_to_next_level is None:
+            return "has no effect — you're already at max level"
+        award = entity.xp_to_next_level
+        levels_gained = entity.gain_xp(award)
+        result = f"floods you with {award} XP"
+        if levels_gained:
+            result += f" — you reach level {levels_gained[-1]}!"
+        return result
+
+    elif potion.kind == "invisibility":
+        statuses.apply_status(entity, "invisibility", potion.duration)
+        return f"grants invisibility for {potion.duration} turns"
+
+    elif potion.kind == "frost":
+        dmg = potion.power + level * 3
+        entity.hp = max(0, entity.hp - dmg)
+        statuses.apply_status(entity, "slow", potion.duration)
+        return f"deals {dmg} frost damage and inflicts Slow for {potion.duration} turns ({entity.hp}/{entity.max_hp} HP)"
+
+    elif potion.kind == "flame":
+        dmg = potion.power + level * 5
+        entity.hp = max(0, entity.hp - dmg)
+        # Burning's own per-turn damage isn't specified by the design doc —
+        # this uses `level` as a placeholder magnitude; easy to retune.
+        statuses.apply_status(entity, "burning", potion.duration, power=level)
+        return f"deals {dmg} fire damage and sets them Burning for {potion.duration} turns ({entity.hp}/{entity.max_hp} HP)"
+
+    elif potion.kind == "thunderstorm":
+        dmg = potion.power + level * 4
+        entity.hp = max(0, entity.hp - dmg)
+        statuses.apply_status(entity, "stun", potion.duration)
+        return f"deals {dmg} lightning damage and Stuns them for {potion.duration} turn(s) ({entity.hp}/{entity.max_hp} HP)"
+
     else:
         return "has no effect"
+
+
+def _apply_toxic_gas(room, player, level):
+    """
+    Potion of Toxic Gas needs the room, not a single target — it fills
+    the room and hits everything alive in it (player included) for
+    LVL*2 damage per turn, for 10 turns. Anything that walks in after it's
+    thrown doesn't get caught — a skeleton limitation, not a design claim.
+    """
+    dmg = level * 2
+    targets = [player] + [m for m in room.monsters if m.alive]
+    for target in targets:
+        statuses.apply_status(target, "toxic", 10, power=dmg)
+    return f"fills the room with choking gas — {dmg} damage per turn to everything here, for 10 turns"
+
+
+def _apply_true_sight(entity, room):
+    """
+    Potion of True Sight needs the room to reveal anything hidden there.
+    The buff (rolling max damage — see Player.attack) lasts 4 turns; the
+    reveal itself is a one-time look at whatever's in room.secrets right
+    now, since there's no persistent "currently revealed" room state yet.
+    """
+    statuses.apply_status(entity, "true_sight", 4)
+    if room.secrets:
+        reveal = "; ".join(room.secrets)
+        return f"sharpens your senses — your next attacks strike true, and you notice: {reveal}"
+    return "sharpens your senses — your next attacks strike true, but this room holds no hidden secrets"
 
 
 class Room:
@@ -61,6 +200,7 @@ class Room:
         self.puzzle_kind = None     # flavor text naming the puzzle, if any
         self.puzzle_solved = False  # only meaningful for room_type == "puzzle"
         self.explore_progress = 0   # times explored (normal) / progress made (puzzle)
+        self.secrets = []  # skeleton: strings revealed by Potion of True Sight; nothing populates this yet
 
     def connect(self, direction, other_room, bidirectional=True):
         """Link this room to another room in a given direction."""
@@ -141,28 +281,51 @@ class GameState:
 
         turns_elapsed = math.floor(self.turn_count) - math.floor(old_turn_count)
         if turns_elapsed > 0 and self.running and self.player.alive:
-            self._monster_turn(turns_elapsed)
+            self._process_world_turns(turns_elapsed)
 
         if self.running and not self.player.alive:
             print("\nYou have died. Game over.")
             self.running = False
 
-    def _monster_turn(self, count):
+    def _process_world_turns(self, count):
         """
-        Let every living monster in the current room attack once, `count`
-        times over (once per whole turn the triggering action crossed).
-        Right now fights are always single-enemy, but this already loops
-        over every living monster in the room so a multi-monster room
-        (or a monster gaining an extra attack) works without changes here.
+        Advance the world by `count` whole turns. This is the one place
+        "the world reacts" happens, whether that reaction is a monster's
+        fist or a lingering potion effect: each turn, every status on the
+        player and on every monster in the room ticks (damage-over-time,
+        expirations), then every living, non-stunned monster attacks
+        once — skipping every other turn instead while Slowed.
+
+        Right now fights are always single-enemy, but this already
+        loops over every living monster in the room so a multi-monster
+        room (or a monster gaining an extra attack) works without
+        changes here.
         """
         for _ in range(count):
             if not self.player.alive:
                 break
+
+            statuses.tick_statuses(self.player, 1, on_message=print)
+            if not self.player.alive:
+                break
+
             for monster in self.current_room.monsters:
                 if not monster.alive:
                     continue
-                if not self.player.alive:
-                    break
+
+                stunned = statuses.has_status(monster, "stun")
+                skip_for_slow = False
+                if statuses.has_status(monster, "slow"):
+                    slow = monster.statuses["slow"]
+                    slow["skip_next"] = not slow.get("skip_next", False)
+                    skip_for_slow = slow["skip_next"]
+
+                statuses.tick_statuses(monster, 1, on_message=print)
+                if not monster.alive or not self.player.alive:
+                    continue
+                if stunned or skip_for_slow:
+                    continue
+
                 retaliation = monster.attack()
                 block = self.player.block()
                 damage_taken = max(0, retaliation - block)
@@ -171,6 +334,24 @@ class GameState:
                     f"The {monster.name} claws back for {damage_taken} damage. "
                     f"({self.player.hp}/{self.player.max_hp} HP)"
                 )
+
+    def _attack_cost(self):
+        """
+        Effective turn cost of one player attack. Potion of Haste's
+        action buff turns "2 actions per turn" into 2.5 for its
+        duration — i.e. each attack costs 1/2.5 of a turn instead of
+        1/2 — without changing the normal action-economy math in
+        advance_turns at all.
+        """
+        if statuses.has_status(self.player, "haste_action"):
+            return 1 / 2.5
+        return ATTACK_TURN_COST
+
+    def _move_cost(self):
+        """Effective turn cost of moving/using stairs, per Potion of Haste's move buff."""
+        if statuses.has_status(self.player, "haste_move"):
+            return HASTE_MOVE_COST
+        return MOVE_TURN_COST
 
     def enter_dungeon(self):
         """Leave the hub and generate floor 1. Only valid from the hub."""
@@ -185,7 +366,7 @@ class GameState:
         self.depth = 1
         self.act = floors.act_for_depth(self.depth)
         print("You step into the darkness and the passage seals behind you...\n")
-        self.advance_turns(MOVE_TURN_COST)
+        self.advance_turns(self._move_cost())
         if self.running:
             print(self.current_room.describe())
 
@@ -215,7 +396,7 @@ class GameState:
         # Leaving costs the turns, so anything still alive in this room gets
         # its attacks in now, before you're gone — arriving downstairs doesn't
         # trigger anything on its own.
-        self.advance_turns(MOVE_TURN_COST)
+        self.advance_turns(self._move_cost())
         if not self.running:
             return
 
@@ -248,7 +429,7 @@ class GameState:
         # Leaving costs the turns, so anything still alive in this room gets
         # its attacks in now, before you're gone — arriving upstairs doesn't
         # trigger anything on its own.
-        self.advance_turns(MOVE_TURN_COST)
+        self.advance_turns(self._move_cost())
         if not self.running:
             return
 
@@ -274,7 +455,7 @@ class GameState:
         # Leaving costs the turns, so anything still alive in this room gets
         # its attacks in now, before you're gone — walking into the new room
         # doesn't trigger anything on its own.
-        self.advance_turns(MOVE_TURN_COST)
+        self.advance_turns(self._move_cost())
         if not self.running:
             return
 
@@ -322,8 +503,8 @@ class GameState:
 
         # Monster retaliation (if the target or any other monster here
         # survived) now happens inside advance_turns, once a full turn's
-        # worth of action has actually elapsed — see _monster_turn.
-        self.advance_turns(ATTACK_TURN_COST)
+        # worth of action has actually elapsed — see _process_world_turns.
+        self.advance_turns(self._attack_cost())
 
     def flee(self, direction):
         """Attempt to escape combat by moving to another room."""
@@ -336,7 +517,7 @@ class GameState:
 
         # Leaving costs the turns, so anything still alive in this room gets
         # its attacks in now, before you're gone.
-        self.advance_turns(MOVE_TURN_COST)
+        self.advance_turns(self._move_cost())
         if not self.running:
             return
 
@@ -541,7 +722,7 @@ class GameState:
         if isinstance(item, Potion):
             self.drink(name_fragment)
         elif isinstance(item, Weapon):
-            unmet = item.unmet_requirements(self.player)
+            unmet = _unmet_requirements(item, self.player)
             if unmet:
                 reqs = ", ".join(
                     f"{stat} {required} (you have {getattr(self.player, stat, 0)})"
@@ -555,7 +736,7 @@ class GameState:
                 f"You equip the {item.name} ({item.damage_min}-{item.damage_max} base damage)"
             )
         elif isinstance(item, Armor):
-            unmet = item.unmet_requirements(self.player)
+            unmet = _unmet_requirements(item, self.player)
             if unmet:
                 reqs = ", ".join(
                     f"{stat} {required} (you have {getattr(self.player, stat, 0)})"
@@ -576,7 +757,11 @@ class GameState:
             print(f"You can't figure out how to use the {item.name}.")
 
     def drink(self, name_fragment):
-        """Drink a potion yourself — the effect applies to the player."""
+        """
+        Drink a potion yourself — the effect applies to the player.
+        Turn cost is charged by the command layer (commands.py), same
+        as take/drop/use — not here.
+        """
         if not name_fragment:
             print("Drink what?")
             return
@@ -588,13 +773,21 @@ class GameState:
             print(f"You can't drink the {item.name}.")
             return
 
-        effect = _apply_potion_effect(item, self.player)
+        if item.kind == "toxic_gas":
+            effect = _apply_toxic_gas(self.current_room, self.player, self.player.LVL)
+        elif item.kind == "true_sight":
+            effect = _apply_true_sight(self.player, self.current_room)
+        else:
+            effect = _apply_potion_effect(item, self.player, self.player.LVL)
         print(f"You drink the {item.name}. It {effect}.")
         self.player.inventory.remove(item)
-        self.advance_turns(ATTACK_TURN_COST)
 
     def throw(self, name_fragment, target_name):
-        """Throw a potion at a monster in the room — the effect applies to it."""
+        """
+        Throw a potion at a monster in the room — the effect applies to
+        it. Turn cost is charged by the command layer (commands.py),
+        same as take/drop/use — not here.
+        """
         if not name_fragment:
             print("Throw what?")
             return
@@ -604,6 +797,12 @@ class GameState:
             return
         if not isinstance(item, Potion):
             print(f"The {item.name} doesn't do much when thrown.")
+            return
+
+        if item.kind == "toxic_gas":
+            effect = _apply_toxic_gas(self.current_room, self.player, self.player.LVL)
+            print(f"You throw the {item.name}. It {effect}.")
+            self.player.inventory.remove(item)
             return
 
         if not target_name:
@@ -618,7 +817,10 @@ class GameState:
                 print(f"There's no '{target_name}' here to throw it at.")
                 return
 
-        effect = _apply_potion_effect(item, target)
+        if item.kind == "true_sight":
+            effect = _apply_true_sight(target, self.current_room)
+        else:
+            effect = _apply_potion_effect(item, target, self.player.LVL)
         print(f"You throw the {item.name} at the {target.name}. It {effect}.")
         self.player.inventory.remove(item)
 
@@ -633,5 +835,3 @@ class GameState:
                     f"You have gained 2 stat points (use 'level <stat>' to spend it) "
                     f"and recover a bit of HP/MP."
                 )
-
-        self.advance_turns(ATTACK_TURN_COST)

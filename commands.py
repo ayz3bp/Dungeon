@@ -1,6 +1,8 @@
 """Player-facing command layer: parsing raw input and dispatching it
 against a GameState."""
 
+import statuses
+
 HELP_TEXT = """\
 Commands:
   look                - describe the current room again
@@ -102,6 +104,9 @@ def handle_command(verb, rest, state):
             print(f"Satiety: {p.satiety:.0f}/100")
         if p.unspent_stat_points > 0:
             print(f"You have {p.unspent_stat_points} unspent stat point(s).")
+        active_effects = statuses.describe_statuses(p)
+        if active_effects:
+            print(f"Active effects: {active_effects}")
 
     elif verb == "level":
         if not rest:
@@ -132,7 +137,6 @@ def handle_command(verb, rest, state):
         else:
             if " at " in rest:
                 item_part, _, target_part = rest.partition(" at ")
-                state.advance_turns(0.5)
             else:
                 item_part, target_part = rest, ""
             state.throw(item_part.strip(), target_part.strip())

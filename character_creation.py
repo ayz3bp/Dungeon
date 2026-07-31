@@ -48,7 +48,7 @@ def create_character():
         if (
             hasattr(item, "damage_min")
             and player.equipped_weapon is None
-            and not item.unmet_requirements(player)
+            and all(getattr(player, stat, 0) >= value for stat, value in item.requirements.items())
         ):
             player.equipped_weapon = item
 

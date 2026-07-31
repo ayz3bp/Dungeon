@@ -8,17 +8,22 @@ class Item:
         self.description = description
 
 
-PRIMARY_STATS = ("CON", "STR", "DEX", "INT")
+def meets_requirements(player, requirements):
+    """True if `player` meets every stat requirement in `requirements`
+    (e.g. {"STR": 8, "DEX": 12} — any subset of CON/STR/DEX/INT)."""
+    return all(getattr(player, stat, 0) >= value for stat, value in requirements.items())
 
 
-def _unmet_requirements(requirements, player):
-    """Return {stat: required} for any requirement in `requirements` the
-    player doesn't meet. Empty dict means the player can equip the item."""
-    return {
-        stat: required
-        for stat, required in requirements.items()
-        if getattr(player, stat, 0) < required
-    }
+def missing_requirements(player, requirements):
+    """List of 'STAT value' strings for requirements `player` doesn't meet."""
+    return [f"{stat} {value}" for stat, value in requirements.items() if getattr(player, stat, 0) < value]
+
+
+def requirements_str(requirements):
+    """Human-readable summary of a requirements dict, e.g. 'STR 8, DEX 12'."""
+    if not requirements:
+        return "none"
+    return ", ".join(f"{stat} {value}" for stat, value in requirements.items())
 
 
 class Weapon(Item):
@@ -26,40 +31,16 @@ class Weapon(Item):
         super().__init__(name, description)
         self.damage_min = damage_min
         self.damage_max = damage_max
-        # Maps any of CON/STR/DEX/INT to the minimum value needed to wield
-        # this weapon, e.g. {"DEX": 12} or {"STR": 8, "INT": 6}. Omitted
-        # stats have no requirement.
         self.requirements = dict(requirements) if requirements else {}
         self.attack_bonus = attack_bonus
-
-    @property
-    def str_req(self):
-        """Convenience accessor for the STR requirement specifically (0 if
-        this weapon has none) — used for the excess-strength attack bonus."""
-        return self.requirements.get("STR", 0)
-
-    def unmet_requirements(self, player):
-        return _unmet_requirements(self.requirements, player)
-
 
 class Armor(Item):
     def __init__(self, name, description, block_min, block_max, requirements=None, armor_class=0):
         super().__init__(name, description)
         self.block_min = block_min
         self.block_max = block_max
-        # Same shape as Weapon.requirements: any of CON/STR/DEX/INT to a
-        # minimum value, e.g. {"CON": 14} or {"DEX": 10}.
         self.requirements = dict(requirements) if requirements else {}
         self.armor_class = armor_class
-
-    @property
-    def str_req(self):
-        """Convenience accessor for the STR requirement specifically (0 if
-        this armor has none)."""
-        return self.requirements.get("STR", 0)
-
-    def unmet_requirements(self, player):
-        return _unmet_requirements(self.requirements, player)
 
 class Potion(Item):
     """

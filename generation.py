@@ -32,14 +32,14 @@ ROOM_THEMES = [
 ]
 
 MONSTER_TEMPLATES = [
-    {"name": "Giant Rat",      "hp": (6, 10),  "atk": (1, 3),  "tier": 1, "weight": 5, "xp": (2, 4),   "gold": (1, 3)},
-    {"name": "Cave Spider",    "hp": (8, 12),  "atk": (2, 4),  "tier": 1, "weight": 4, "xp": (3, 5),   "gold": (2, 4)},
-    {"name": "Skeleton",       "hp": (10, 16), "atk": (2, 5),  "tier": 1, "weight": 3, "xp": (4, 6),   "gold": (3, 5)},
-    {"name": "Goblin Grunt",   "hp": (12, 18), "atk": (3, 6),  "tier": 2, "weight": 4, "xp": (6, 9),   "gold": (5, 8)},
-    {"name": "Rot Zombie",     "hp": (16, 22), "atk": (3, 7),  "tier": 2, "weight": 3, "xp": (7, 10),  "gold": (6, 9)},
-    {"name": "Crypt Wight",    "hp": (18, 24), "atk": (4, 8),  "tier": 2, "weight": 2, "xp": (8, 12),  "gold": (7, 11)},
-    {"name": "Dungeon Ogre",   "hp": (25, 35), "atk": (5, 10), "tier": 3, "weight": 2, "xp": (14, 20), "gold": (12, 18)},
-    {"name": "Shadow Wraith",  "hp": (20, 28), "atk": (6, 12), "tier": 3, "weight": 2, "xp": (12, 18), "gold": (10, 16)},
+    {"name": "Giant Rat",      "hp": (12, 12),  "atk": (1, 6),  "tier": 1, "weight": 5, "xp": (2, 4),   "gold": (1, 3)},
+    {"name": "Cave Spider",    "hp": (20, 20),  "atk": (2, 8),  "tier": 1, "weight": 4, "xp": (3, 5),   "gold": (2, 4)},
+    {"name": "Skeleton",       "hp": (24, 24), "atk": (2, 10),  "tier": 1, "weight": 3, "xp": (4, 6),   "gold": (3, 5)},
+    {"name": "Goblin Grunt",   "hp": (20, 20), "atk": (3, 9),  "tier": 2, "weight": 4, "xp": (6, 9),   "gold": (5, 8)},
+    {"name": "Rot Zombie",     "hp": (32, 32), "atk": (3, 10),  "tier": 2, "weight": 3, "xp": (7, 10),  "gold": (6, 9)},
+    {"name": "Crypt Wight",    "hp": (38, 38), "atk": (4, 14),  "tier": 2, "weight": 2, "xp": (8, 12),  "gold": (7, 11)},
+    {"name": "Dungeon Ogre",   "hp": (44, 4), "atk": (5, 16), "tier": 3, "weight": 2, "xp": (14, 20), "gold": (12, 18)},
+    {"name": "Shadow Wraith",  "hp": (40, 40), "atk": (6, 20), "tier": 3, "weight": 2, "xp": (12, 18), "gold": (10, 16)},
 ]
 
 WEAPON_TEMPLATES = [
@@ -80,7 +80,7 @@ WEAPON_TEMPLATES = [
     {"name": "Recurve Bow",     "description": "This massive bow with curved limbs fires enormous bolts.",      "damage": (5, 40), "requirements": {"STR": 18}},
 
     #Tier 5 weapons
-    {"name": "Zewihander",      "description": "More slab of metal than blade, this weapon is unstoppable.",            "damage": (7, 35), "requirements": {"STR": 21}},
+    {"name": "Zweihander",      "description": "More slab of metal than blade, this weapon is unstoppable.",            "damage": (7, 35), "requirements": {"STR": 21}},
     {"name": "War Maul",        "description": "A massive chunk of metal. Crushes anything in its path.",               "damage": (7, 40), "requirements": {"STR": 21}},
     {"name": "Greataxe",        "description": "Dual blades adorn this weapon of pure force.",                          "damage": (7, 38), "requirements": {"STR": 21}},
     {"name": "War Bow",         "description": "This instrument of ruin  fires bolts designed to destroy castles.",     "damage": (7, 45), "requirements": {"STR": 21}},
@@ -98,17 +98,29 @@ WEAPON_TEMPLATES = [
 ]
 
 POTION_TEMPLATES = [
-    {"name": "Healing Potion", "description": "A dull red vial that smells faintly of herbs.",    "kind": "heal",   "power": (10, 15)},
+    {"name": "Healing Potion", "description": "A dull red vial that smells faintly of herbs.",    "kind": "heal_over_time", "power": 0, "duration": 0},
     {"name": "Vial of Acid",   "description": "A hissing green liquid, best thrown, not drunk.",   "kind": "damage", "power": (8, 14)},
+
+    {"name": "Potion of Purity",       "description": "A crystal-clear liquid that seems to repel dust and grime.", "kind": "purity",       "power": 0, "duration": 10},
+    {"name": "Potion of Levitation",   "description": "A faintly shimmering vial, lighter than it looks.",          "kind": "levitation",   "power": 0, "duration": 12},
+    {"name": "Potion of Haste",        "description": "The liquid inside seems to move faster than you can track.", "kind": "haste",        "power": 0, "duration": 4},
+    {"name": "Potion of Rejuvenation", "description": "A warm, golden brew that smells of renewal.",                "kind": "rejuvenation", "power": 10, "duration": 10},
+    {"name": "Potion of Experience",   "description": "A vial swirling with captured memories.",                   "kind": "experience",   "power": 0, "duration": 0},
+    {"name": "Potion of Invisibility", "description": "An empty-looking vial — or is it?",                          "kind": "invisibility", "power": 0, "duration": 12},
+    {"name": "Potion of True Sight",   "description": "A vial of liquid so clear it's disorienting to look at.",    "kind": "true_sight",   "power": 0, "duration": 4},
+    {"name": "Potion of Toxic Gas",    "description": "A corroded vial that hisses ominously when shaken.",         "kind": "toxic_gas",    "power": 0, "duration": 10},
+    {"name": "Potion of Frost",        "description": "An ice-cold vial, frost creeping across its surface.",       "kind": "frost",        "power": 2, "duration": 5},
+    {"name": "Potion of Flame",        "description": "A vial that radiates heat, embers dancing within.",          "kind": "flame",        "power": 4, "duration": 4},
+    {"name": "Potion of Thunderstorm", "description": "A vial crackling faintly with restrained lightning.",        "kind": "thunderstorm", "power": 3, "duration": 1},
 ]
 
 ARMOR_TEMPLATES = [
-    {"name": "Cloth Armor",   "description": "Simple woven robes, better than nothing.",                  "block": (0, 4),  "requirements": {"STR": 5}},
-    {"name": "Leather Armor", "description": "Boiled leather plates stitched over a hide vest.",           "block": (1, 8),  "requirements": {"STR": 8}},
-    {"name": "Mail Armor",    "description": "Interlocking iron rings form a flexible shirt.",              "block": (2, 12), "requirements": {"STR": 11}},
-    {"name": "Scale Armor",   "description": "Overlapping metal scales riveted to a leather backing.",     "block": (3, 16), "requirements": {"STR": 14}},
-    {"name": "Plate Armor",   "description": "A full suit of forged steel plate.",                         "block": (4, 20), "requirements": {"STR": 18}},
-    {"name": "Bulwark Plate", "description": "Impossibly dense armor that only a hardy body can bear.",    "block": (4, 22), "requirements": {"CON": 14}},
+    {"name": "Cloth Armor",   "description": "Simple woven robes, better than nothing.",                  "block": (0, 2),  "requirements": {"STR": 5}},
+    {"name": "Leather Armor", "description": "Boiled leather plates stitched over a hide vest.",           "block": (0, 6),  "requirements": {"STR": 8}},
+    {"name": "Mail Armor",    "description": "Interlocking iron rings form a flexible shirt.",              "block": (1, 10), "requirements": {"STR": 11}},
+    {"name": "Scale Armor",   "description": "Overlapping metal scales riveted to a leather backing.",     "block": (2, 14), "requirements": {"STR": 14}},
+    {"name": "Plate Armor",   "description": "A full suit of forged steel plate.",                         "block": (3, 18), "requirements": {"STR": 18}},
+    {"name": "Bulwark Plate", "description": "Impossibly dense armor that only a hardy body can bear.",    "block": (3, 20), "requirements": {"CON": 14}},
 ]
 
 FOOD_TEMPLATES = [

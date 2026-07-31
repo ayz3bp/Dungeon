@@ -16,6 +16,7 @@ class Monster:
         self.XP = XP
         self.GOLD = GOLD
         self.ACC = ACC
+        self.statuses = {}  # name -> {"turns": remaining, ...} — see statuses.py
 
     @property
     def alive(self):
@@ -116,6 +117,7 @@ class Player:
         self.inventory = []       # list of Item
         self.equipped_weapon = None
         self.equipped_armor = None
+        self.statuses = {}  # name -> {"turns": remaining, ...} — see statuses.py
 
     @property
     def alive(self):
@@ -335,6 +337,8 @@ class Player:
 
     def attack(self):
         low, high = self.damage_range
+        if "true_sight" in self.statuses:
+            return high
         return _triangular_roll(low, high)
 
     @property
@@ -342,7 +346,7 @@ class Player:
         """Total ATK applied to both ends of the equipped damage range."""
         if self.equipped_weapon is None:
             return self.ATK
-        excess_strength = max(0, self.STR - self.equipped_weapon.str_req)
+        excess_strength = max(0, self.STR - self.equipped_weapon.requirements.get("STR", 0))
         return self.ATK + self.equipped_weapon.attack_bonus + excess_strength // 2
 
     @property
@@ -357,7 +361,7 @@ class Player:
 
     def block(self):
         low, high = self.block_range
-        return _triangular_roll(low, high)
+        return random.randint(low, high)
 
     @property
     def block_bonus(self):
