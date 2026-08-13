@@ -32,14 +32,14 @@ ROOM_THEMES = [
 ]
 
 MONSTER_TEMPLATES = [
-    {"name": "Giant Rat",      "hp": (12, 12),  "atk": (1, 6),  "tier": 1, "weight": 5, "xp": (2, 4),   "gold": (1, 3)},
-    {"name": "Cave Spider",    "hp": (20, 20),  "atk": (2, 8),  "tier": 1, "weight": 4, "xp": (3, 5),   "gold": (2, 4)},
-    {"name": "Skeleton",       "hp": (24, 24), "atk": (2, 10),  "tier": 1, "weight": 3, "xp": (4, 6),   "gold": (3, 5)},
-    {"name": "Goblin Grunt",   "hp": (20, 20), "atk": (3, 9),  "tier": 2, "weight": 4, "xp": (6, 9),   "gold": (5, 8)},
-    {"name": "Rot Zombie",     "hp": (32, 32), "atk": (3, 10),  "tier": 2, "weight": 3, "xp": (7, 10),  "gold": (6, 9)},
-    {"name": "Crypt Wight",    "hp": (38, 38), "atk": (4, 14),  "tier": 2, "weight": 2, "xp": (8, 12),  "gold": (7, 11)},
-    {"name": "Dungeon Ogre",   "hp": (44, 4), "atk": (5, 16), "tier": 3, "weight": 2, "xp": (14, 20), "gold": (12, 18)},
-    {"name": "Shadow Wraith",  "hp": (40, 40), "atk": (6, 20), "tier": 3, "weight": 2, "xp": (12, 18), "gold": (10, 16)},
+    {"name": "Giant Rat",      "hp": (20, 20),  "atk": (2, 6),  "tier": 1, "weight": 5, "xp": (2, 2),   "gold": (1, 3)},
+    {"name": "Cave Spider",    "hp": (26, 26),  "atk": (4, 8),  "tier": 1, "weight": 4, "xp": (4, 4),   "gold": (2, 4)},
+    {"name": "Skeleton",       "hp": (34, 34), "atk": (6, 12),  "tier": 1, "weight": 3, "xp": (8, 8),   "gold": (3, 5)},
+    {"name": "Goblin Grunt",   "hp": (24, 24), "atk": (6, 12),  "tier": 2, "weight": 4, "xp": (6, 6),   "gold": (5, 8)},
+    {"name": "Rot Zombie",     "hp": (54, 54), "atk": (8, 16),  "tier": 2, "weight": 3, "xp": (10, 10),  "gold": (6, 9)},
+    {"name": "Crypt Wight",    "hp": (62, 62), "atk": (12, 18),  "tier": 2, "weight": 2, "xp": (14, 14),  "gold": (7, 11)},
+    {"name": "Dungeon Ogre",   "hp": (72, 72), "atk": (18, 22), "tier": 3, "weight": 2, "xp": (18, 18), "gold": (12, 18)},
+    {"name": "Shadow Wraith",  "hp": (88, 88), "atk": (20, 24), "tier": 3, "weight": 2, "xp": (20, 20), "gold": (10, 16)},
 ]
 
 WEAPON_TEMPLATES = [
